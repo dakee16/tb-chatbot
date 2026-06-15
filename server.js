@@ -20,6 +20,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import handler from './api/chat.js';
+import leaveMessageHandler from './api/leave-message.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,6 +47,10 @@ app.get('/health', (req, res) => {
 // Chat endpoint — delegates to the existing Vercel-style handler
 app.post('/api/chat', handler);
 app.options('/api/chat', handler);
+
+// Offline leave-a-message — creates a Zammad ticket when no agent is online
+app.post('/api/leave-message', leaveMessageHandler);
+app.options('/api/leave-message', leaveMessageHandler);
 
 // Catch-all error handler
 app.use((err, req, res, next) => {
