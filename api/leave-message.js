@@ -75,7 +75,12 @@ export default async function handler(req, res) {
     if (!r.ok) {
       const errText = await r.text();
       console.error('Zammad ticket create failed:', r.status, errText);
-      return res.status(502).json({ ok: false, error: 'Could not create ticket' });
+      return res.status(502).json({
+        ok: false,
+        error: 'Could not create ticket',
+        zammad_status: r.status,
+        zammad_error: errText.slice(0, 300),
+      });
     }
 
     // Best-effort: update the customer's phone number if provided
