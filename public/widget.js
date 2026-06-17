@@ -280,7 +280,7 @@
       zw = new window.ZammadWS({
         host: ZAMMAD_WSS,
         chatId: ZAMMAD_CHAT_ID,
-        debug: true,
+        debug: false,
         onStatus: function (state) {
           if (mode !== MODE.CONNECTING) return;
           if (state === 'online') {
