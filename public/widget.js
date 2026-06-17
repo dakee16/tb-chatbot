@@ -211,10 +211,11 @@
 
   function buildTranscriptText() {
     if (transcript.length === 0) return '(no prior conversation)';
+    // Zammad chat renders HTML and collapses plain \n, so use <br> for line breaks.
     var lines = transcript.map(function (t) {
-      return t.who + ':\n' + stripMarkdown(t.text);
+      return '<b>' + t.who + ':</b> ' + stripMarkdown(t.text);
     });
-    return 'Chatbot conversation before handoff:\n\n' + lines.join('\n\n');
+    return 'Chatbot conversation before handoff:<br><br>' + lines.join('<br><br>');
   }
 
   // ---------- BOT MODE ----------
