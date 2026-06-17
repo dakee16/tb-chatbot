@@ -13,7 +13,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
-const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || '';
+const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || 'QEZ5YRDLhKRRTobzt8TJPQwzvw4hzE_A5Ls63mPVuTtlr3pL4EJLmt-HTvjGrK4q';
 const ZAMMAD_GROUP = process.env.ZAMMAD_GROUP || 'Tilesbay';
 
 function setCors(res) {
@@ -40,6 +40,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'email and message are required' });
     }
 
+    if (!ZAMMAD_API_TOKEN) {
+      console.error('ZAMMAD_API_TOKEN is not set in .env.local');
+      return res.status(500).json({ ok: false, error: 'Server missing ZAMMAD_API_TOKEN' });
+    }
+
     const customerName = (name && name.trim()) || email.split('@')[0];
 
     // Build the ticket body: customer message + phone + page + bot transcript
@@ -56,10 +61,12 @@ export default async function handler(req, res) {
     const ticketPayload = {
       title: `Live chat (offline) — ${customerName}`,
       group: ZAMMAD_GROUP,
-      customer: email, // Zammad finds-or-creates the customer by email
+      // 'guess:<email>' tells Zammad to find-or-create the customer by email.
+      customer_id: `guess:${email}`,
       article: {
         subject: 'Offline chat message',
-        body: bodyLines.join('\n'),
+        body: bodyLines.join('<br>'),
+        content_type: 'text/html',
         type: 'web',
         internal: false,
         sender: 'Customer',
