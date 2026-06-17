@@ -197,9 +197,24 @@
     if (el) el.remove();
   }
 
+  // Convert/strip basic markdown so it doesn't show literal ** _ etc.
+  function stripMarkdown(s) {
+    if (!s) return s;
+    return s
+      .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold** -> bold
+      .replace(/(^|\s)\*(.+?)\*(?=\s|$)/g, '$1$2') // *italic* -> italic
+      .replace(/(^|\s)_(.+?)_(?=\s|$)/g, '$1$2')   // _italic_ -> italic
+      .replace(/`([^`]+)`/g, '$1')        // `code` -> code
+      .replace(/^#{1,6}\s+/gm, '')        // # headings
+      .replace(/^\s*[-*]\s+/gm, '• ');    // - bullets -> •
+  }
+
   function buildTranscriptText() {
     if (transcript.length === 0) return '(no prior conversation)';
-    return transcript.map((t) => `${t.who}: ${t.text}`).join('\n');
+    var lines = transcript.map(function (t) {
+      return t.who + ':\n' + stripMarkdown(t.text);
+    });
+    return 'Chatbot conversation before handoff:\n\n' + lines.join('\n\n');
   }
 
   // ---------- BOT MODE ----------
@@ -226,7 +241,8 @@
         const wantsHandoff = /\[\[HANDOFF\]\]/i.test(reply);
         reply = reply.replace(/\[\[HANDOFF\]\]/gi, '').trim();
         if (reply) {
-          addMessage('bot', reply);
+          var clean = stripMarkdown(reply);
+          addMessage('bot', clean);
           history.push({ role: 'assistant', content: reply });
         }
         if (wantsHandoff) {
@@ -263,6 +279,7 @@
       zw = new window.ZammadWS({
         host: ZAMMAD_WSS,
         chatId: ZAMMAD_CHAT_ID,
+        debug: true,
         onStatus: function (state) {
           if (mode !== MODE.CONNECTING) return;
           if (state === 'online') {
@@ -283,7 +300,7 @@
           titleText.textContent = agent && agent.name ? agent.name : 'Live Agent';
           statusDot.classList.add('online');
           addMessage('system', `You're now chatting with ${agent && agent.name ? agent.name : 'a team member'}.`, false);
-          const dump = '--- Chatbot conversation so far ---\n' + buildTranscriptText();
+          const dump = buildTranscriptText();
           zw.sendMessage(dump);
         },
         onAgentMsg: function (content) {
