@@ -21,6 +21,7 @@ import { fileURLToPath } from 'url';
 
 import handler from './api/chat.js';
 import leaveMessageHandler from './api/leave-message.js';
+import rateHandler from './api/rate.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,10 @@ app.options('/api/chat', handler);
 // Offline leave-a-message — creates a Zammad ticket when no agent is online
 app.post('/api/leave-message', leaveMessageHandler);
 app.options('/api/leave-message', leaveMessageHandler);
+
+// Chat rating — thumbs up/down added as a note on the chat ticket
+app.post('/api/rate', rateHandler);
+app.options('/api/rate', rateHandler);
 
 // Catch-all error handler
 app.use((err, req, res, next) => {

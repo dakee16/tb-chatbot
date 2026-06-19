@@ -22,6 +22,7 @@
   const BACKEND_ORIGIN = scriptUrl.origin;          // e.g. https://chat.tilesbay.net
   const BACKEND_URL = `${BACKEND_ORIGIN}/api/chat`;
   const LEAVE_MSG_URL = `${BACKEND_ORIGIN}/api/leave-message`;
+  const RATE_URL = `${BACKEND_ORIGIN}/api/rate`;
 
   // Zammad host can be overridden via data-zammad attr on the script tag;
   // defaults to the CRM behind the same root domain.
@@ -109,6 +110,14 @@
       padding: 10px; background: #1a1a1a; color: white; border: none; border-radius: 8px;
       cursor: pointer; font-weight: 600; font-size: 14px;
     }
+    .tbc-rating { align-self: center; text-align: center; padding: 12px 8px; }
+    .tbc-rating-q { color: #555; font-size: 13px; margin-bottom: 8px; }
+    .tbc-rating-btns { display: flex; gap: 16px; justify-content: center; }
+    .tbc-rating-btns button {
+      font-size: 26px; background: #f1f1f1; border: 1px solid #ddd; border-radius: 10px;
+      width: 52px; height: 44px; cursor: pointer; transition: transform 0.1s, background 0.1s;
+    }
+    .tbc-rating-btns button:hover { transform: scale(1.08); background: #e7e7e7; }
   `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -151,6 +160,9 @@
   // ---------- State ----------
   const MODE = { BOT: 'bot', CONNECTING: 'connecting', AGENT: 'agent', LEAVE: 'leave' };
   let mode = MODE.BOT;
+  let hadAgentChat = false;     // did this conversation reach a live agent?
+  let chatSessionId = null;     // Zammad chat session id (for rating)
+  let ratingShown = false;      // guard so rating UI shows once
   const history = [];          // bot conversation [{role, content}]
   const transcript = [];       // full visible transcript [{who, text}] for handoff
   let isLoading = false;
@@ -211,7 +223,8 @@
 
   function buildTranscriptText() {
     if (transcript.length === 0) return '(no prior conversation)';
-    // Zammad chat renders HTML and collapses plain \n, so use <br> for line breaks.
+    // Zammad chat renders HTML, and plain \n get collapsed. Use <br> so the
+    // agent sees each turn on its own line.
     var lines = transcript.map(function (t) {
       return '<b>' + t.who + ':</b> ' + stripMarkdown(t.text);
     });
@@ -280,7 +293,7 @@
       zw = new window.ZammadWS({
         host: ZAMMAD_WSS,
         chatId: ZAMMAD_CHAT_ID,
-        debug: false,
+        debug: true,
         onStatus: function (state) {
           if (mode !== MODE.CONNECTING) return;
           if (state === 'online') {
@@ -298,6 +311,8 @@
         onStart: function (agent) {
           hideTyping();
           mode = MODE.AGENT;
+          hadAgentChat = true;
+          chatSessionId = zw.sessionId || null;
           titleText.textContent = agent && agent.name ? agent.name : 'Live Agent';
           statusDot.classList.add('online');
           addMessage('system', `You're now chatting with ${agent && agent.name ? agent.name : 'a team member'}.`, false);
@@ -316,6 +331,7 @@
         onClosed: function () {
           addMessage('system', 'The agent has ended the chat.', false);
           endAgentMode();
+          showRating();
         },
         onError: function (state) {
           if (mode === MODE.AGENT) return;
@@ -341,6 +357,37 @@
     statusDot.classList.remove('online');
     handoffRow.style.display = '';
     if (zw) { try { zw.close(); } catch (e) {} zw = null; }
+  }
+
+  // ---------- RATING (after a live-agent chat) ----------
+  function showRating() {
+    if (ratingShown || !hadAgentChat) return;
+    ratingShown = true;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'tbc-rating';
+    wrap.innerHTML = `
+      <div class="tbc-rating-q">How was your chat?</div>
+      <div class="tbc-rating-btns">
+        <button class="tbc-rate-up" aria-label="Thumbs up">👍</button>
+        <button class="tbc-rate-down" aria-label="Thumbs down">👎</button>
+      </div>
+    `;
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    function sendRating(value) {
+      // optimistic UI: replace with a thank-you immediately
+      wrap.innerHTML = '<div class="tbc-rating-q">Thanks for your feedback!</div>';
+      fetch(RATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: chatSessionId, rating: value }),
+      }).catch(function () { /* non-fatal */ });
+    }
+
+    wrap.querySelector('.tbc-rate-up').addEventListener('click', function () { sendRating('up'); });
+    wrap.querySelector('.tbc-rate-down').addEventListener('click', function () { sendRating('down'); });
   }
 
   // ---------- LEAVE-A-MESSAGE (offline fallback) ----------
@@ -387,7 +434,8 @@
         if (data && data.ok) {
           addMessage('system', "Thanks \u2014 we've got your message and will email you back soon.", false);
         } else {
-          addMessage('system', 'Sorry, we could not send your message. Please email csr@tilesbay.com.', false);
+          var detail = data && (data.zammad_error || data.error) ? ' (' + (data.zammad_error || data.error) + ')' : '';
+          addMessage('system', 'Sorry, we could not send your message. Please email csr@tilesbay.com.' + detail, false);
         }
       } catch (e) {
         form.remove();
@@ -412,16 +460,29 @@
   }
 
   // ---------- Events ----------
+  function openPanel() {
+    panel.classList.add('open');
+    if (transcript.length === 0 && mode === MODE.BOT) {
+      addMessage('bot', "Hi! I can help you find the right tile or calculate how much you need. What are you working on?");
+    }
+    inputEl.focus();
+  }
+
   bubble.addEventListener('click', () => {
-    panel.classList.toggle('open');
     if (panel.classList.contains('open')) {
-      if (transcript.length === 0 && mode === MODE.BOT) {
-        addMessage('bot', "Hi! I can help you find the right tile or calculate how much you need. What are you working on?");
-      }
-      inputEl.focus();
+      panel.classList.remove('open');
+    } else {
+      openPanel();
     }
   });
-  closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+
+  closeBtn.addEventListener('click', () => {
+    panel.classList.remove('open');
+    // If they spoke to an agent and the chat is over, prompt for a rating.
+    if (hadAgentChat && mode === MODE.BOT && !ratingShown) {
+      showRating();
+    }
+  });
   sendBtn.addEventListener('click', send);
   handoffBtn.addEventListener('click', beginHandoff);
   inputEl.addEventListener('keydown', (e) => {
@@ -430,4 +491,24 @@
   inputEl.addEventListener('input', () => {
     if (mode === MODE.AGENT && zw) zw.sendTyping();
   });
+
+  // ---------- Auto-open after 8 page views (persistent across visits) ----------
+  // Counts page views in localStorage. At the 8th view, auto-opens the panel
+  // ONCE. After that it never auto-opens again (flag persisted), it just sits
+  // as the bubble in the corner.
+  try {
+    const PAGES_KEY = 'tbc_pageviews';
+    const OPENED_KEY = 'tbc_autoopened';
+    if (window.localStorage.getItem(OPENED_KEY) !== '1') {
+      const count = parseInt(window.localStorage.getItem(PAGES_KEY) || '0', 10) + 1;
+      window.localStorage.setItem(PAGES_KEY, String(count));
+      if (count >= 8) {
+        window.localStorage.setItem(OPENED_KEY, '1');
+        // small delay so it doesn't fight with page load
+        setTimeout(openPanel, 1200);
+      }
+    }
+  } catch (e) {
+    // localStorage unavailable (private mode etc.) — skip auto-open silently
+  }
 })();
