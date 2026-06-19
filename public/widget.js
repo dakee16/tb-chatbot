@@ -114,8 +114,9 @@
     .tbc-rating-q { color: #555; font-size: 13px; margin-bottom: 8px; }
     .tbc-rating-btns { display: flex; gap: 16px; justify-content: center; }
     .tbc-rating-btns button {
-      font-size: 26px; background: #f1f1f1; border: 1px solid #ddd; border-radius: 10px;
-      width: 52px; height: 44px; cursor: pointer; transition: transform 0.1s, background 0.1s;
+      font-size: 24px; background: #f1f1f1; border: 1px solid #ddd; border-radius: 10px;
+      width: 56px; height: 48px; cursor: pointer; transition: transform 0.1s, background 0.1s;
+      display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;
     }
     .tbc-rating-btns button:hover { transform: scale(1.08); background: #e7e7e7; }
   `;
