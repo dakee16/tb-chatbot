@@ -50,10 +50,11 @@ function esc(s) {
 
 async function createTicket({ customerMsg, botReply, name, email, url }) {
   // Identify the customer: use email if given (guess: finds-or-creates),
-  // otherwise an anonymous "Unknown visitor".
+  // otherwise an anonymous guest. 'guess:<email>' tells Zammad to
+  // find-or-create the customer rather than requiring it to pre-exist.
   const customerField = email
     ? { customer_id: `guess:${email}` }
-    : { customer: 'guest@tilesbay-chat.local' };
+    : { customer_id: 'guess:guest@tilesbay-chat.local' };
 
   const displayName = name || 'Unknown visitor';
   const bodyHtml =
