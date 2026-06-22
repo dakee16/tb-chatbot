@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import handler from './api/chat.js';
 import leaveMessageHandler from './api/leave-message.js';
 import rateHandler from './api/rate.js';
+import chatTicketHandler from './api/chat-ticket.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +57,10 @@ app.options('/api/leave-message', leaveMessageHandler);
 // Chat rating — thumbs up/down added as a note on the chat ticket
 app.post('/api/rate', rateHandler);
 app.options('/api/rate', rateHandler);
+
+// Auto-create / update a Zammad ticket for every chat (bot + agent)
+app.post('/api/chat-ticket', chatTicketHandler);
+app.options('/api/chat-ticket', chatTicketHandler);
 
 // Catch-all error handler
 app.use((err, req, res, next) => {

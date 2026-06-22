@@ -10,6 +10,7 @@
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
+import { getTicketForClient } from './chat-ticket.js';
 
 const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
 const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || '';
@@ -51,7 +52,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   try {
-    const { session_id, rating } = req.body || {};
+    const { session_id, client_id, rating } = req.body || {};
     if (!rating || (rating !== 'up' && rating !== 'down')) {
       return res.status(400).json({ ok: false, error: 'rating must be up or down' });
     }
@@ -62,10 +63,11 @@ export default async function handler(req, res) {
     const label = rating === 'up' ? '👍 Positive' : '👎 Negative';
     const noteBody = `Customer chat rating: ${label}`;
 
-    // Try to attach the note to the chat's ticket; if we can't resolve it,
-    // still return ok so the widget UX isn't broken, but log it.
+    // Prefer the in-memory client_id -> ticket map (reliable). Fall back to the
+    // chat-session lookup if we only have a session_id.
     let ticketId = null;
-    if (session_id) ticketId = await findTicketForSession(session_id);
+    if (client_id) ticketId = getTicketForClient(client_id);
+    if (!ticketId && session_id) ticketId = await findTicketForSession(session_id);
 
     if (!ticketId) {
       console.warn('rate: could not resolve ticket for session', session_id, '- rating was', rating);

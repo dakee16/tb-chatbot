@@ -23,6 +23,11 @@
   const BACKEND_URL = `${BACKEND_ORIGIN}/api/chat`;
   const LEAVE_MSG_URL = `${BACKEND_ORIGIN}/api/leave-message`;
   const RATE_URL = `${BACKEND_ORIGIN}/api/rate`;
+  const CHAT_TICKET_URL = `${BACKEND_ORIGIN}/api/chat-ticket`;
+
+  // Stable id for THIS conversation, so the backend threads all exchanges into
+  // one ticket. Regenerated per page-load conversation.
+  const CLIENT_ID = 'tbc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
 
   // Zammad host can be overridden via data-zammad attr on the script tag;
   // defaults to the CRM behind the same root domain.
@@ -114,9 +119,8 @@
     .tbc-rating-q { color: #555; font-size: 13px; margin-bottom: 8px; }
     .tbc-rating-btns { display: flex; gap: 16px; justify-content: center; }
     .tbc-rating-btns button {
-      font-size: 24px; background: #f1f1f1; border: 1px solid #ddd; border-radius: 10px;
-      width: 56px; height: 48px; cursor: pointer; transition: transform 0.1s, background 0.1s;
-      display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;
+      font-size: 26px; background: #f1f1f1; border: 1px solid #ddd; border-radius: 10px;
+      width: 52px; height: 44px; cursor: pointer; transition: transform 0.1s, background 0.1s;
     }
     .tbc-rating-btns button:hover { transform: scale(1.08); background: #e7e7e7; }
   `;
@@ -233,6 +237,43 @@
   }
 
   // ---------- BOT MODE ----------
+  // Send each bot exchange to the backend so a Zammad ticket is created (on the
+  // first message) and appended (subsequent messages). Fire-and-forget.
+  let capturedContact = { name: null, email: null };
+  function recordExchange(customerMsg, botReply) {
+    try {
+      fetch(CHAT_TICKET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'message',
+          client_id: CLIENT_ID,
+          customerMsg: customerMsg,
+          botReply: botReply,
+          name: capturedContact.name,
+          email: capturedContact.email,
+          url: window.location.href,
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // On handoff, upgrade the existing ticket (group + owner = agent).
+  function notifyHandoff(group, agentName) {
+    try {
+      fetch(CHAT_TICKET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'handoff',
+          client_id: CLIENT_ID,
+          group: group || null,
+          agentName: agentName || null,
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   async function sendToBot(text) {
     isLoading = true;
     sendBtn.disabled = true;
@@ -259,6 +300,7 @@
           var clean = stripMarkdown(reply);
           addMessage('bot', clean);
           history.push({ role: 'assistant', content: reply });
+          recordExchange(text, clean);
         }
         if (wantsHandoff) {
           beginHandoff();
@@ -317,6 +359,8 @@
           titleText.textContent = agent && agent.name ? agent.name : 'Live Agent';
           statusDot.classList.add('online');
           addMessage('system', `You're now chatting with ${agent && agent.name ? agent.name : 'a team member'}.`, false);
+          // Upgrade the existing bot ticket: set owner to this agent.
+          notifyHandoff(null, agent && agent.name ? agent.name : null);
           const dump = buildTranscriptText();
           zw.sendMessage(dump);
         },
@@ -383,7 +427,7 @@
       fetch(RATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: chatSessionId, rating: value }),
+        body: JSON.stringify({ session_id: chatSessionId, client_id: CLIENT_ID, rating: value }),
       }).catch(function () { /* non-fatal */ });
     }
 
