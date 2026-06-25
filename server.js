@@ -23,6 +23,7 @@ import handler from './api/chat.js';
 import leaveMessageHandler from './api/leave-message.js';
 import rateHandler from './api/rate.js';
 import chatTicketHandler from './api/chat-ticket.js';
+import uploadHandler from './api/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,7 +35,7 @@ const app = express();
 // useful for logging).
 app.set('trust proxy', 1);
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check — used by PM2 and any external monitoring
@@ -61,6 +62,10 @@ app.options('/api/rate', rateHandler);
 // Auto-create / update a Zammad ticket for every chat (bot + agent)
 app.post('/api/chat-ticket', chatTicketHandler);
 app.options('/api/chat-ticket', chatTicketHandler);
+
+// Photo upload — attaches JPEG to the chat ticket
+app.post('/api/upload', uploadHandler);
+app.options('/api/upload', uploadHandler);
 
 // Catch-all error handler
 app.use((err, req, res, next) => {

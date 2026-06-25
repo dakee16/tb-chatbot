@@ -24,6 +24,7 @@
   const LEAVE_MSG_URL = `${BACKEND_ORIGIN}/api/leave-message`;
   const RATE_URL = `${BACKEND_ORIGIN}/api/rate`;
   const CHAT_TICKET_URL = `${BACKEND_ORIGIN}/api/chat-ticket`;
+  const UPLOAD_URL = `${BACKEND_ORIGIN}/api/upload`;
 
   // Stable id for THIS conversation, so the backend threads all exchanges into
   // one ticket. Regenerated per page-load conversation.
@@ -123,6 +124,20 @@
       width: 52px; height: 44px; cursor: pointer; transition: transform 0.1s, background 0.1s;
     }
     .tbc-rating-btns button:hover { transform: scale(1.08); background: #e7e7e7; }
+    .tbc-buttons { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 14px 8px; }
+    .tbc-chip {
+      padding: 7px 14px; background: #fff; border: 1px solid #1a1a1a;
+      border-radius: 16px; cursor: pointer; font-size: 13px; font-family: inherit;
+      color: #1a1a1a; transition: background 0.12s, color 0.12s;
+    }
+    .tbc-chip:hover { background: #1a1a1a; color: #fff; }
+    .tbc-attach {
+      background: none; border: none; cursor: pointer; padding: 6px;
+      display: flex; align-items: center; color: #888; transition: color 0.12s;
+    }
+    .tbc-attach:hover { color: #1a1a1a; }
+    .tbc-attach svg { width: 20px; height: 20px; }
+    .tbc-img-preview { max-width: 180px; border-radius: 8px; margin-top: 4px; }
   `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -146,6 +161,8 @@
       <button class="tbc-handoff-btn">Talk to a human</button>
     </div>
     <div class="tbc-input-row">
+      <button class="tbc-attach" aria-label="Attach photo" title="Send a photo (JPEG)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
+      <input class="tbc-file-input" type="file" accept="image/jpeg" style="display:none;" />
       <input class="tbc-input" type="text" placeholder="Ask about tile, sizing, or your project..." />
       <button class="tbc-send">Send</button>
     </div>
@@ -159,6 +176,8 @@
   const handoffRow = panel.querySelector('.tbc-handoff-row');
   const handoffBtn = panel.querySelector('.tbc-handoff-btn');
   const inputRow = panel.querySelector('.tbc-input-row');
+  const attachBtn = panel.querySelector('.tbc-attach');
+  const fileInput = panel.querySelector('.tbc-file-input');
   const titleText = panel.querySelector('.tbc-title-text');
   const statusDot = panel.querySelector('.tbc-status-dot');
 
@@ -236,6 +255,87 @@
     return 'Chatbot conversation before handoff:<br><br>' + lines.join('<br><br>');
   }
 
+  // ---------- INTERACTIVE BUTTONS ----------
+  // Parse [[BUTTONS: opt1 | opt2 | opt3]] from bot reply.
+  function parseButtons(reply) {
+    var match = reply.match(/\[\[BUTTONS:\s*(.+?)\]\]/i);
+    if (!match) return { text: reply, buttons: null };
+    var text = reply.replace(/\[\[BUTTONS:\s*.+?\]\]/i, '').trim();
+    var buttons = match[1].split('|').map(function (b) { return b.trim(); }).filter(Boolean);
+    return { text: text, buttons: buttons.length > 0 ? buttons : null };
+  }
+
+  function renderButtons(buttons) {
+    var wrap = document.createElement('div');
+    wrap.className = 'tbc-buttons';
+    buttons.forEach(function (label) {
+      var chip = document.createElement('button');
+      chip.className = 'tbc-chip';
+      chip.textContent = label;
+      chip.addEventListener('click', function () {
+        wrap.remove();
+        inputEl.value = label;
+        send();
+      });
+      wrap.appendChild(chip);
+    });
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // ---------- IMAGE UPLOAD ----------
+  function handleImageUpload(file) {
+    if (!file || !file.type.match(/image\/jpeg/)) {
+      addMessage('system', 'Only JPEG images are allowed.', false);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      addMessage('system', 'Image too large. Max 10MB.', false);
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var base64 = e.target.result;
+      var div = document.createElement('div');
+      div.className = 'tbc-msg user';
+      var img = document.createElement('img');
+      img.src = base64;
+      img.className = 'tbc-img-preview';
+      img.alt = 'Photo';
+      div.appendChild(img);
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      transcript.push({ who: 'Customer', text: '[sent a photo]' });
+
+      addMessage('system', 'Uploading photo\u2026', false);
+      fetch(UPLOAD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: CLIENT_ID,
+          image_base64: base64,
+          filename: file.name || 'photo.jpg',
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var msgs = messagesEl.querySelectorAll('.tbc-msg.system');
+          var last = msgs[msgs.length - 1];
+          if (last && last.textContent.indexOf('Uploading') !== -1) last.remove();
+          if (data && data.ok) {
+            addMessage('system', 'Photo sent.', false);
+          } else {
+            addMessage('system', 'Could not upload photo: ' + (data.error || 'unknown error'), false);
+          }
+        })
+        .catch(function () {
+          addMessage('system', 'Failed to upload photo. Please try again.', false);
+        });
+    };
+    reader.readAsDataURL(file);
+  }
+
   // ---------- BOT MODE ----------
   // Send each bot exchange to the backend so a Zammad ticket is created (on the
   // first message) and appended (subsequent messages). Fire-and-forget.
@@ -297,10 +397,15 @@
         const wantsHandoff = /\[\[HANDOFF\]\]/i.test(reply);
         reply = reply.replace(/\[\[HANDOFF\]\]/gi, '').trim();
         if (reply) {
-          var clean = stripMarkdown(reply);
+          // Parse interactive buttons if present
+          var parsed = parseButtons(reply);
+          var clean = stripMarkdown(parsed.text);
           addMessage('bot', clean);
           history.push({ role: 'assistant', content: reply });
           recordExchange(text, clean);
+          if (parsed.buttons) {
+            renderButtons(parsed.buttons);
+          }
         }
         if (wantsHandoff) {
           beginHandoff();
@@ -530,6 +635,13 @@
   });
   sendBtn.addEventListener('click', send);
   handoffBtn.addEventListener('click', beginHandoff);
+  attachBtn.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files && fileInput.files[0]) {
+      handleImageUpload(fileInput.files[0]);
+      fileInput.value = '';
+    }
+  });
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
