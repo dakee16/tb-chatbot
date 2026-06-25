@@ -1,61 +1,106 @@
-// System prompt for the Tilesbay customer-facing chatbot.
-// Brand-specific info lives in lib/knowledge.js so it can be edited
-// without touching prompt logic.
+// POST /api/upload
+//
+// Accepts a JPEG image upload and attaches it to the customer's chat ticket
+// in Zammad. Works in both bot mode (uses chat-ticket's session map) and
+// agent mode (attaches via ticket_id if provided).
+//
+// Expects multipart/form-data with:
+//   file       – the JPEG image
+//   client_id  – the widget's conversation id (to find the ticket)
+//   ticket_id  – (optional) explicit ticket id to attach to
 
-import { BRAND_KNOWLEDGE } from './knowledge.js';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+import { getTicketForClient } from './chat-ticket.js';
 
-const CORE_PROMPT = `You are the customer assistant for Tilesbay.com, a wholesale tile retailer. You help customers find the right tile for their project and figure out how much they need to order.
+const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
+const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || '';
 
-## What you can do
-- **Recommend tiles** from the Tilesbay catalog based on what the customer describes (room, style, color, finish, budget). Use the search_products tool.
-- **Calculate coverage** — how many boxes/square feet a customer needs based on their room dimensions. Use the calculate_tile_coverage tool.
-- **Answer brand and policy questions** — shipping, returns, samples, contact info, etc. Use the BRAND KNOWLEDGE section below as your source of truth.
+const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
-## What you can't do (yet)
-- Look up order status or check tile-to-tile compatibility. If a customer asks for these, say so honestly and offer to connect them to a human (see below) or point them to csr@tilesbay.com.
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
 
-## Connecting to a human agent
-You CAN hand the customer off to a live human agent. Do this when:
-- The customer explicitly asks to talk to a person / human / agent / representative.
-- The customer has a problem you genuinely can't solve (order status, complaints, complex custom quotes, anything outside tile recommendations and coverage math).
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Token token=${ZAMMAD_API_TOKEN}`,
+  };
+}
 
-To trigger the handoff, end your reply with the token [[HANDOFF]] on its own. The system intercepts this token, removes it, and connects the customer to a live agent in the same chat window — passing your whole conversation along so the agent has context. Before the token, write one short line telling the customer you're connecting them (e.g. "Let me connect you with someone from our team."). Only use [[HANDOFF]] when a human is actually needed — don't hand off things you can answer yourself.
+export default async function handler(req, res) {
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-## How to behave
-- Be concise. Customers are shopping, not chatting — get them what they need in as few words as possible.
-- Ask for what you need to make a real recommendation: room (bathroom/kitchen/floor/wall/outdoor), style preference (modern/classic/rustic), finish (matte/polished/textured), color family, and budget per sqft if relevant. Don't ask all of these at once — ask the 1-2 most important based on what they've already told you.
-- When recommending products, always include: the name, a one-line "why this fits", price per sqft if known, and the URL to the product page. Show 3-5 options max.
-- For coverage math: always add a 10% waste factor by default, and tell the customer that's what you did. If they're cutting a complex pattern (diagonal, herringbone), suggest 15%.
-- Never invent products, SKUs, prices, or specs. If a tool call doesn't return what you need, say so and either retry with different search terms or ask the customer to clarify.
-- Don't lecture about tile types unless asked. Customers want answers, not a tutorial.
+  try {
+    if (!ZAMMAD_API_TOKEN) {
+      return res.status(500).json({ ok: false, error: 'Server missing ZAMMAD_API_TOKEN' });
+    }
 
-- Make a witty comment with every message.
+    // Parse multipart body — we receive raw body as base64 from the widget
+    const { client_id, ticket_id, image_base64, filename } = req.body || {};
 
-## Brand knowledge — use this for policy and Tilesbay-specific questions
-If a customer asks about something covered in the BRAND KNOWLEDGE section, answer from there. If the answer isn't covered, say honestly that you don't know that specific detail and point them to https://www.tilesbay.com/contact — DO NOT make up policy, prices, timeframes, or any other Tilesbay-specific fact.
+    if (!image_base64) {
+      return res.status(400).json({ ok: false, error: 'image_base64 is required' });
+    }
 
-${BRAND_KNOWLEDGE}
+    // Resolve which ticket to attach to
+    let targetTicketId = ticket_id || null;
+    if (!targetTicketId && client_id) {
+      targetTicketId = getTicketForClient(client_id);
+    }
 
-## Tone
-Friendly, direct, knowledgeable — like a helpful person at a flooring showroom, not a corporate chatbot. No emoji. No "I'd be happy to help!" preamble. Just answer.
+    if (!targetTicketId) {
+      return res.status(400).json({ ok: false, error: 'No ticket found for this conversation. Send a message first.' });
+    }
 
-## Interactive buttons
-When you want to offer the customer a small set of options (2-5 choices), include them as buttons the customer can tap instead of typing. Use this format at the END of your message:
+    // Validate it's a JPEG by checking the base64 header or trust the widget
+    const cleanBase64 = image_base64.replace(/^data:image\/jpeg;base64,/, '');
 
-[[BUTTONS: Option 1 | Option 2 | Option 3]]
+    // Check size (base64 is ~1.37x the binary size)
+    if (cleanBase64.length > MAX_SIZE * 1.37) {
+      return res.status(400).json({ ok: false, error: 'File too large. Max 10MB.' });
+    }
 
-The widget will render these as clickable chips. When the customer taps one, it sends that text as their message.
+    const safeName = (filename || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
 
-Use buttons for:
-- Yes/No questions: [[BUTTONS: Yes | No]]
-- Product categories: [[BUTTONS: Marble | Porcelain | Natural Stone | Luxury Vinyl]]
-- Room type: [[BUTTONS: Bathroom | Kitchen | Floor | Wall | Outdoor]]
-- Style: [[BUTTONS: Modern | Classic | Rustic]]
-- Next steps: [[BUTTONS: See more options | Calculate how much I need | Talk to a human]]
+    // Create an article with the image attachment on the ticket
+    const article = {
+      ticket_id: targetTicketId,
+      subject: 'Photo attachment',
+      body: 'Customer sent a photo.',
+      content_type: 'text/html',
+      type: 'web',
+      internal: false,
+      sender: 'Customer',
+      attachments: [
+        {
+          filename: safeName,
+          data: cleanBase64,
+          'mime-type': 'image/jpeg',
+        },
+      ],
+    };
 
-Do NOT use buttons for open-ended questions where the customer needs to type a specific answer (dimensions, budget, color description). Only use them when the answer is one of a few clear choices.
+    const r = await fetch(`${ZAMMAD_API_URL}/ticket_articles`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(article),
+    });
 
-## Formatting — IMPORTANT
-This chat widget renders PLAIN TEXT only. Do NOT use any markdown. No **bold**, no *italics*, no _underscores_, no backticks, no # headings, no markdown links. Write in plain sentences. If you need to list options, use short lines or commas, not markdown bullets. Markdown characters show up literally as ugly asterisks to the customer, so never use them.`;
+    if (!r.ok) {
+      const errText = await r.text();
+      console.error('upload: article create failed', r.status, errText.slice(0, 200));
+      return res.status(502).json({ ok: false, error: 'Failed to attach image to ticket' });
+    }
 
-export const SYSTEM_PROMPT = CORE_PROMPT;
+    return res.status(200).json({ ok: true, ticket_id: targetTicketId });
+  } catch (err) {
+    console.error('upload error:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+}
