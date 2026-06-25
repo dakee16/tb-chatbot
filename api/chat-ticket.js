@@ -48,19 +48,50 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-async function createTicket({ customerMsg, botReply, name, email, url }) {
-  // Identify the customer: use email if given (guess: finds-or-creates),
-  // otherwise an anonymous guest. 'guess:<email>' tells Zammad to
-  // find-or-create the customer rather than requiring it to pre-exist.
+// Look up approximate location from an IP address using ip-api.com (free, no key).
+async function geoLookup(ip) {
+  if (!ip || ip === '127.0.0.1' || ip === '::1') return null;
+  try {
+    const r = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,city,regionName,country`);
+    const data = await r.json();
+    if (data.status === 'success') {
+      return [data.city, data.regionName, data.country].filter(Boolean).join(', ');
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Extract the real client IP from request headers (behind nginx proxy).
+function getClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return xff.split(',')[0].trim();
+  return req.headers['x-real-ip'] || req.connection?.remoteAddress || null;
+}
+
+async function createTicket({ customerMsg, botReply, name, email, url, location, deviceType, pageHistory }) {
   const customerField = email
     ? { customer_id: `guess:${email}` }
     : { customer_id: 'guess:guest@tilesbay-chat.local' };
 
   const displayName = name || 'Unknown visitor';
+
+  // Visitor info block at the top of the ticket
+  const infoLines = [];
+  if (location) infoLines.push(`<b>Location:</b> ${esc(location)}`);
+  if (deviceType) infoLines.push(`<b>Device:</b> ${esc(deviceType)}`);
+  if (url) infoLines.push(`<b>Current page:</b> ${esc(url)}`);
+  if (Array.isArray(pageHistory) && pageHistory.length > 0) {
+    const pages = pageHistory.map(p => esc(p)).join('<br>');
+    infoLines.push(`<b>Pages visited:</b><br>${pages}`);
+  }
+  const infoBlock = infoLines.length > 0
+    ? infoLines.join('<br>') + '<br><hr><br>'
+    : '';
+
   const bodyHtml =
+    infoBlock +
     `<b>Customer:</b> ${esc(customerMsg)}<br><br>` +
-    `<b>Bot:</b> ${esc(botReply)}` +
-    (url ? `<br><br><i>Page: ${esc(url)}</i>` : '');
+    `<b>Bot:</b> ${esc(botReply)}`;
 
   const payload = {
     title: `Website chat — ${displayName}`,
@@ -176,7 +207,7 @@ export default async function handler(req, res) {
     }
 
     // default action: 'message'
-    const { customerMsg, botReply, name, email, url } = req.body;
+    const { customerMsg, botReply, name, email, url, deviceType, pageHistory } = req.body;
     if (!customerMsg) return res.status(400).json({ ok: false, error: 'customerMsg required' });
 
     if (existing && existing.ticketId) {
@@ -185,7 +216,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, ticket_id: existing.ticketId, created: false });
     }
 
-    const ticketId = await createTicket({ customerMsg, botReply: botReply || '', name, email, url });
+    // First message — look up visitor's location from their IP
+    const clientIp = getClientIp(req);
+    const location = await geoLookup(clientIp);
+
+    const ticketId = await createTicket({
+      customerMsg, botReply: botReply || '', name, email, url,
+      location, deviceType, pageHistory,
+    });
     if (!ticketId) return res.status(502).json({ ok: false, error: 'create failed' });
 
     sessionTickets.set(client_id, { ticketId, lastSeen: Date.now() });

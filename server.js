@@ -24,6 +24,7 @@ import leaveMessageHandler from './api/leave-message.js';
 import rateHandler from './api/rate.js';
 import chatTicketHandler from './api/chat-ticket.js';
 import uploadHandler from './api/upload.js';
+import agentAliasHandler from './api/agent-alias.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +67,10 @@ app.options('/api/chat-ticket', chatTicketHandler);
 // Photo upload — attaches JPEG to the chat ticket
 app.post('/api/upload', uploadHandler);
 app.options('/api/upload', uploadHandler);
+
+// Agent alias lookup — returns alias_name for display in chat widget
+app.get('/api/agent-alias', agentAliasHandler);
+app.options('/api/agent-alias', agentAliasHandler);
 
 // Catch-all error handler
 app.use((err, req, res, next) => {

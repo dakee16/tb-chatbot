@@ -25,10 +25,25 @@
   const RATE_URL = `${BACKEND_ORIGIN}/api/rate`;
   const CHAT_TICKET_URL = `${BACKEND_ORIGIN}/api/chat-ticket`;
   const UPLOAD_URL = `${BACKEND_ORIGIN}/api/upload`;
+  const ALIAS_URL = `${BACKEND_ORIGIN}/api/agent-alias`;
 
-  // Stable id for THIS conversation, so the backend threads all exchanges into
-  // one ticket. Regenerated per page-load conversation.
+  // Stable id for THIS conversation
   const CLIENT_ID = 'tbc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+
+  // ---------- Visitor tracking ----------
+  // Track pages visited across the session (persists in sessionStorage)
+  var pageHistory = [];
+  try {
+    var saved = window.sessionStorage.getItem('tbc_pages');
+    if (saved) pageHistory = JSON.parse(saved);
+  } catch (e) {}
+  if (pageHistory.indexOf(window.location.href) === -1) {
+    pageHistory.push(window.location.href);
+    try { window.sessionStorage.setItem('tbc_pages', JSON.stringify(pageHistory)); } catch (e) {}
+  }
+
+  // Detect device type
+  var deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
 
   // Zammad host can be overridden via data-zammad attr on the script tag;
   // defaults to the CRM behind the same root domain.
@@ -353,6 +368,8 @@
           name: capturedContact.name,
           email: capturedContact.email,
           url: window.location.href,
+          deviceType: deviceType,
+          pageHistory: pageHistory,
         }),
       }).catch(function () {});
     } catch (e) {}
@@ -461,11 +478,30 @@
           mode = MODE.AGENT;
           hadAgentChat = true;
           chatSessionId = zw.sessionId || null;
-          titleText.textContent = agent && agent.name ? agent.name : 'Live Agent';
+          var realName = agent && agent.name ? agent.name : 'Live Agent';
+          // Show real name initially, then swap to alias if one exists
+          titleText.textContent = realName;
           statusDot.classList.add('online');
-          addMessage('system', `You're now chatting with ${agent && agent.name ? agent.name : 'a team member'}.`, false);
+          addMessage('system', 'You\'re now chatting with ' + realName + '.', false);
+          // Look up alias asynchronously
+          fetch(ALIAS_URL + '?name=' + encodeURIComponent(realName))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data && data.alias) {
+                titleText.textContent = data.alias;
+                // Update the system message too
+                var msgs = messagesEl.querySelectorAll('.tbc-msg.system');
+                for (var i = msgs.length - 1; i >= 0; i--) {
+                  if (msgs[i].textContent.indexOf(realName) !== -1) {
+                    msgs[i].textContent = 'You\'re now chatting with ' + data.alias + '.';
+                    break;
+                  }
+                }
+              }
+            })
+            .catch(function () {});
           // Upgrade the existing bot ticket: set owner to this agent.
-          notifyHandoff(null, agent && agent.name ? agent.name : null);
+          notifyHandoff(null, realName);
           const dump = buildTranscriptText();
           zw.sendMessage(dump);
         },
