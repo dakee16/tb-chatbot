@@ -513,15 +513,9 @@
       }
     }
   `;
-  // ---------- Shadow DOM host ----------
-  const host = document.createElement('div');
-  host.id = 'tilesbay-chatbot-host';
-  document.body.appendChild(host);
-  const shadow = host.attachShadow({ mode: 'open' });
-
   const style = document.createElement('style');
   style.textContent = css;
-  shadow.appendChild(style);
+  document.head.appendChild(style);
 
   // ---------- DOM ----------
   const bubble = document.createElement('div');
@@ -665,9 +659,7 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
   function hideTyping() {
-    const el = shadow.getElementById
-      ? shadow.getElementById('tbc-typing-indicator')
-      : shadow.querySelector('#tbc-typing-indicator');
+    const el = document.getElementById('tbc-typing-indicator');
     if (el) el.remove();
   }
 
