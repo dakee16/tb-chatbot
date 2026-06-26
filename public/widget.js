@@ -66,263 +66,352 @@
 
     .tbc-bubble {
       position: fixed; bottom: 24px; right: 24px; z-index: 99999;
-      width: 62px; height: 62px; border-radius: 50%;
-      background: #111; color: white;
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+      color: white;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+      animation: tbc-float 3s ease-in-out infinite;
     }
-    .tbc-bubble::after {
-      content: ''; position: absolute; inset: -3px; border-radius: 50%;
-      border: 2px solid #e0322c; opacity: 0; transition: opacity 0.25s ease;
+    @keyframes tbc-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
-    .tbc-bubble:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
-    .tbc-bubble:hover::after { opacity: 1; }
-    .tbc-bubble svg { width: 27px; height: 27px; }
+    .tbc-bubble::before {
+      content: ''; position: absolute; inset: -4px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #e0322c, transparent 60%, #e0322c);
+      opacity: 0; transition: opacity 0.35s ease; z-index: -1;
+      animation: tbc-ring-spin 3s linear infinite paused;
+    }
+    @keyframes tbc-ring-spin { to { transform: rotate(360deg); } }
+    .tbc-bubble:hover {
+      transform: translateY(-4px) scale(1.08);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: none;
+    }
+    .tbc-bubble:hover::before { opacity: 0.6; animation-play-state: running; }
+    .tbc-bubble svg { width: 28px; height: 28px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)); }
 
     .tbc-panel {
-      position: fixed; bottom: 100px; right: 24px; z-index: 99999;
-      width: 396px; max-width: calc(100vw - 32px);
-      height: 600px; max-height: calc(100vh - 130px);
-      background: #ffffff; border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.24), 0 0 0 1px rgba(0,0,0,0.04);
+      position: fixed; bottom: 102px; right: 24px; z-index: 99999;
+      width: 400px; max-width: calc(100vw - 32px);
+      height: 620px; max-height: calc(100vh - 130px);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.06);
       display: none; flex-direction: column;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       overflow: hidden;
-      animation: tbc-panelIn 0.28s cubic-bezier(0.34,1.3,0.64,1);
+      animation: tbc-panelIn 0.35s cubic-bezier(0.22,1,0.36,1);
     }
     @keyframes tbc-panelIn {
-      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .tbc-panel.open { display: flex; }
 
     .tbc-header {
-      padding: 20px 22px; background: #111; color: white;
+      padding: 22px 24px 20px; color: white; position: relative;
+      background: linear-gradient(135deg, #111 0%, #1a1a1a 50%, #222 100%);
       display: flex; justify-content: space-between; align-items: center;
-      position: relative;
+      border-radius: 28px 28px 0 0;
+      overflow: hidden;
+    }
+    .tbc-header::before {
+      content: ''; position: absolute; top: -40%; right: -20%;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(224,50,44,0.15) 0%, transparent 70%);
     }
     .tbc-header::after {
       content: ''; position: absolute; left: 0; right: 0; bottom: 0;
-      height: 3px; background: linear-gradient(90deg, #e0322c 0%, #e0322c 30%, transparent 100%);
+      height: 3px;
+      background: linear-gradient(90deg, #e0322c 0%, rgba(224,50,44,0.3) 60%, transparent 100%);
     }
     .tbc-header-title {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: center; gap: 14px;
       font-weight: 700; font-size: 16px; letter-spacing: -0.02em;
+      position: relative; z-index: 1;
     }
     .tbc-avatar-sm {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, #e0322c, #a8201b);
+      width: 42px; height: 42px; border-radius: 16px; flex-shrink: 0;
+      background: linear-gradient(135deg, #e0322c 0%, #c0271f 100%);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 15px; color: white;
-      box-shadow: 0 2px 8px rgba(224,50,44,0.4);
+      font-weight: 800; font-size: 16px; color: white;
+      box-shadow: 0 4px 12px rgba(224,50,44,0.35);
     }
     .tbc-subtitle {
-      font-size: 11.5px; color: rgba(255,255,255,0.55); font-weight: 500;
-      margin-top: 3px; letter-spacing: 0.01em;
-      display: flex; align-items: center; gap: 5px;
+      font-size: 11.5px; color: rgba(255,255,255,0.5); font-weight: 500;
+      margin-top: 3px; display: flex; align-items: center; gap: 6px;
     }
     .tbc-status-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: #777;
-      transition: background 0.3s;
+      width: 7px; height: 7px; border-radius: 50%; background: #555;
+      transition: background 0.3s, box-shadow 0.3s;
     }
-    .tbc-status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+    .tbc-status-dot.online {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34,197,94,0.6);
+      animation: tbc-pulse 2s infinite;
+    }
+    @keyframes tbc-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      50% { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+    }
     .tbc-close {
-      cursor: pointer; background: rgba(255,255,255,0.08); border: none;
+      cursor: pointer; border: none; position: relative; z-index: 1;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
       color: rgba(255,255,255,0.7); font-size: 18px; line-height: 1;
-      width: 34px; height: 34px; border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.2s, color 0.2s, transform 0.2s;
     }
-    .tbc-close:hover { background: rgba(255,255,255,0.16); color: white; }
+    .tbc-close:hover { background: rgba(255,255,255,0.16); color: white; transform: rotate(90deg); }
 
     .tbc-messages {
-      flex: 1; overflow-y: auto; padding: 22px 18px 12px;
-      display: flex; flex-direction: column; gap: 16px;
-      background: #fbfbfb;
+      flex: 1; overflow-y: auto; padding: 22px 18px 14px;
+      display: flex; flex-direction: column; gap: 18px;
+      background: linear-gradient(180deg, rgba(250,250,250,0.6) 0%, rgba(245,245,245,0.4) 100%);
     }
-    .tbc-messages::-webkit-scrollbar { width: 5px; }
+    .tbc-messages::-webkit-scrollbar { width: 4px; }
     .tbc-messages::-webkit-scrollbar-track { background: transparent; }
-    .tbc-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-    .tbc-messages::-webkit-scrollbar-thumb:hover { background: #ccc; }
+    .tbc-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
 
-    /* Message row with avatar + content */
     .tbc-row {
       display: flex; gap: 10px; align-items: flex-start;
-      animation: tbc-fadeIn 0.25s ease;
+      animation: tbc-msgIn 0.35s cubic-bezier(0.22,1,0.36,1);
       max-width: 92%;
     }
-    .tbc-row.user { align-self: flex-end; flex-direction: row-reverse; max-width: 85%; }
+    .tbc-row.user { align-self: flex-end; flex-direction: row-reverse; max-width: 82%; }
     .tbc-row.bot, .tbc-row.agent { align-self: flex-start; }
-    @keyframes tbc-fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes tbc-msgIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .tbc-row-avatar {
-      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      width: 30px; height: 30px; border-radius: 10px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 12px; margin-top: 18px;
+      font-weight: 700; font-size: 11px; margin-top: 20px;
     }
     .tbc-row.bot .tbc-row-avatar, .tbc-row.agent .tbc-row-avatar {
-      background: linear-gradient(135deg, #e0322c, #a8201b); color: white;
-      box-shadow: 0 2px 6px rgba(224,50,44,0.3);
+      background: linear-gradient(135deg, #e0322c, #c0271f); color: white;
+      box-shadow: 0 3px 8px rgba(224,50,44,0.25);
     }
-    .tbc-row.user .tbc-row-avatar { background: #111; color: white; }
+    .tbc-row.user .tbc-row-avatar {
+      background: linear-gradient(135deg, #1a1a1a, #111); color: white;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
     .tbc-row-main { display: flex; flex-direction: column; min-width: 0; }
     .tbc-row-label {
-      font-size: 11px; font-weight: 600; color: #999; margin: 0 4px 4px;
-      letter-spacing: 0.01em;
+      font-size: 11px; font-weight: 600; color: #999; margin: 0 4px 5px;
+      letter-spacing: 0.02em;
     }
     .tbc-row.user .tbc-row-label { text-align: right; }
     .tbc-row-time { color: #bbb; font-weight: 500; }
 
     .tbc-msg {
-      padding: 12px 16px; border-radius: 16px;
-      line-height: 1.55; font-size: 13.5px; word-wrap: break-word;
+      padding: 13px 17px; line-height: 1.55; font-size: 13.5px; word-wrap: break-word;
     }
     .tbc-msg.user {
-      background: #111; color: white;
-      border-bottom-right-radius: 5px;
+      background: linear-gradient(135deg, #1a1a1a, #111);
+      color: white; border-radius: 20px 20px 6px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
     }
     .tbc-msg.bot {
-      background: white; color: #1a1a1a;
-      border: 1px solid #ececec; border-bottom-left-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      color: #1a1a1a; border-radius: 20px 20px 20px 6px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
     .tbc-msg.agent {
-      background: white; color: #1a1a1a;
-      border: 1px solid #ececec; border-bottom-left-radius: 5px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      color: #1a1a1a; border-radius: 20px 20px 20px 6px;
+      border: 1px solid rgba(0,0,0,0.06);
       border-left: 3px solid #e0322c;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
     .tbc-msg.system {
-      align-self: center; background: #f0f0f0; color: #888;
-      font-size: 11.5px; text-align: center; max-width: 90%;
-      padding: 6px 14px; font-weight: 500; border-radius: 12px;
+      align-self: center;
+      background: rgba(0,0,0,0.04);
+      backdrop-filter: blur(8px);
+      color: #888; font-size: 11.5px; text-align: center; max-width: 85%;
+      padding: 7px 16px; font-weight: 500; border-radius: 20px;
       letter-spacing: 0.01em;
     }
     .tbc-msg.bot a, .tbc-msg.agent a { color: #e0322c; text-decoration: none; font-weight: 600; }
     .tbc-msg.bot a:hover, .tbc-msg.agent a:hover { text-decoration: underline; }
 
     .tbc-typing {
-      align-self: flex-start; display: flex; gap: 4px; align-items: center;
-      padding: 4px 18px; margin-top: -8px;
+      align-self: flex-start; display: flex; gap: 5px; align-items: center;
+      padding: 6px 18px; margin-top: -10px; margin-left: 40px;
     }
     .tbc-typing span {
       width: 7px; height: 7px; border-radius: 50%; background: #ccc;
       animation: tbc-bounce 1.3s infinite ease-in-out;
     }
-    .tbc-typing span:nth-child(2) { animation-delay: 0.18s; }
-    .tbc-typing span:nth-child(3) { animation-delay: 0.36s; }
+    .tbc-typing span:nth-child(2) { animation-delay: 0.16s; }
+    .tbc-typing span:nth-child(3) { animation-delay: 0.32s; }
     @keyframes tbc-bounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-      30% { transform: translateY(-5px); opacity: 1; }
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
     }
 
     .tbc-input-row {
-      display: flex; gap: 8px; padding: 14px 16px; align-items: center;
-      border-top: 1px solid #f0f0f0; background: white;
+      display: flex; gap: 10px; padding: 16px 18px; align-items: center;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(0,0,0,0.04);
     }
     .tbc-input-wrap {
-      flex: 1; display: flex; align-items: center; gap: 6px;
-      background: #f5f5f5; border: 1.5px solid #f5f5f5; border-radius: 14px;
-      padding: 4px 4px 4px 6px; transition: border-color 0.18s, background 0.18s;
+      flex: 1; display: flex; align-items: center; gap: 4px;
+      background: rgba(245,245,245,0.7);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: 22px;
+      padding: 5px 6px 5px 8px;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
     }
-    .tbc-input-wrap:focus-within { border-color: #111; background: white; }
+    .tbc-input-wrap:focus-within {
+      border-color: rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 0 0 4px rgba(224,50,44,0.06);
+    }
     .tbc-input {
       flex: 1; padding: 9px 8px; border: none; background: transparent;
       font-size: 13.5px; outline: none; font-family: inherit; color: #1a1a1a;
     }
     .tbc-input::placeholder { color: #aaa; }
     .tbc-send {
-      padding: 0; width: 44px; height: 44px; flex-shrink: 0;
-      background: #e0322c; color: white;
-      border: none; border-radius: 14px; cursor: pointer;
+      padding: 0; width: 46px; height: 46px; flex-shrink: 0;
+      background: linear-gradient(135deg, #e0322c 0%, #c4271f 100%);
+      color: white; border: none; border-radius: 50%; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, transform 0.12s;
+      box-shadow: 0 4px 16px rgba(224,50,44,0.3);
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
     }
-    .tbc-send:hover { background: #c4271f; transform: scale(1.05); }
-    .tbc-send:active { transform: scale(0.96); }
-    .tbc-send:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-    .tbc-send svg { width: 19px; height: 19px; }
+    .tbc-send:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(224,50,44,0.4);
+    }
+    .tbc-send:active { transform: scale(0.92); }
+    .tbc-send:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+    .tbc-send svg { width: 20px; height: 20px; }
 
     .tbc-attach {
       background: none; border: none; cursor: pointer; padding: 7px;
       display: flex; align-items: center; color: #999; flex-shrink: 0;
-      border-radius: 10px; transition: color 0.15s, background 0.15s;
+      border-radius: 50%; transition: all 0.2s;
     }
-    .tbc-attach:hover { color: #e0322c; background: rgba(224,50,44,0.07); }
-    .tbc-attach svg { width: 19px; height: 19px; }
-    .tbc-img-preview { max-width: 180px; border-radius: 12px; margin-top: 4px; }
+    .tbc-attach:hover { color: #e0322c; background: rgba(224,50,44,0.06); transform: scale(1.1); }
+    .tbc-attach svg { width: 18px; height: 18px; }
+    .tbc-img-preview { max-width: 180px; border-radius: 16px; margin-top: 4px; }
 
-    .tbc-handoff-row { padding: 0 16px 14px; }
+    .tbc-handoff-row { padding: 0 18px 14px; }
     .tbc-handoff-btn {
-      width: 100%; padding: 11px; background: white; color: #111;
-      border: 1.5px solid #e5e5e5; border-radius: 13px; cursor: pointer;
+      width: 100%; padding: 12px;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      color: #111; border: 1.5px solid rgba(0,0,0,0.08);
+      border-radius: 22px; cursor: pointer;
       font-weight: 600; font-size: 13px; font-family: inherit;
-      transition: all 0.16s; letter-spacing: 0.01em;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .tbc-handoff-btn::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4);
     }
-    .tbc-handoff-btn:hover { border-color: #111; background: #111; color: white; }
-    .tbc-handoff-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .tbc-handoff-btn:hover {
+      background: #111; color: white; border-color: #111;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .tbc-handoff-btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
 
     .tbc-leave-form {
-      padding: 16px; border-top: 1px solid #f0f0f0; background: white;
-      display: flex; flex-direction: column; gap: 9px;
+      padding: 16px 18px;
+      border-top: 1px solid rgba(0,0,0,0.04);
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(12px);
+      display: flex; flex-direction: column; gap: 10px;
     }
     .tbc-leave-form input, .tbc-leave-form textarea {
-      padding: 11px 13px; border: 1.5px solid #ececec; border-radius: 12px;
-      font-size: 13px; font-family: inherit; outline: none;
-      background: #fafafa; transition: border-color 0.15s, background 0.15s;
+      padding: 12px 16px;
+      border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: 16px; font-size: 13px; font-family: inherit; outline: none;
+      background: rgba(250,250,250,0.7);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .tbc-leave-form input:focus, .tbc-leave-form textarea:focus {
-      border-color: #111; background: white;
+      border-color: rgba(0,0,0,0.15);
+      box-shadow: 0 0 0 4px rgba(224,50,44,0.06);
     }
     .tbc-leave-form textarea { resize: vertical; min-height: 64px; }
     .tbc-leave-form button {
-      padding: 12px; background: #e0322c; color: white; border: none; border-radius: 12px;
-      cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.15s;
+      padding: 12px;
+      background: linear-gradient(135deg, #e0322c, #c4271f);
+      color: white; border: none; border-radius: 16px;
+      cursor: pointer; font-weight: 600; font-size: 14px;
+      box-shadow: 0 4px 12px rgba(224,50,44,0.25);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .tbc-leave-form button:hover { background: #c4271f; }
+    .tbc-leave-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(224,50,44,0.35);
+    }
 
-    .tbc-rating { align-self: center; text-align: center; padding: 16px 8px; }
-    .tbc-rating-q { color: #555; font-size: 13px; margin-bottom: 12px; font-weight: 600; }
-    .tbc-rating-btns { display: flex; gap: 12px; justify-content: center; }
+    .tbc-rating { align-self: center; text-align: center; padding: 18px 8px; }
+    .tbc-rating-q { color: #555; font-size: 13px; margin-bottom: 14px; font-weight: 600; }
+    .tbc-rating-btns { display: flex; gap: 14px; justify-content: center; }
     .tbc-rating-btns button {
-      font-size: 24px; background: white; border: 1.5px solid #ececec; border-radius: 14px;
-      width: 58px; height: 50px; cursor: pointer;
+      font-size: 26px;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: 18px;
+      width: 62px; height: 54px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.12s, border-color 0.12s, background 0.12s;
+      transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
     }
     .tbc-rating-btns button:hover {
-      transform: scale(1.1) translateY(-2px); border-color: #e0322c; background: #fff5f5;
+      transform: scale(1.12) translateY(-3px);
+      border-color: #e0322c;
+      box-shadow: 0 6px 20px rgba(224,50,44,0.15);
     }
 
-    /* Interactive chips — arrow-prefixed like the reference */
     .tbc-buttons {
       display: flex; flex-direction: column; gap: 8px;
-      padding: 4px 18px 10px; align-self: flex-start; max-width: 92%;
+      padding: 4px 18px 12px; align-self: flex-start; max-width: 90%;
       margin-left: 40px;
     }
     .tbc-chip {
-      display: flex; align-items: center; gap: 9px;
-      padding: 11px 16px; background: white; border: 1.5px solid #ececec;
-      border-radius: 13px; cursor: pointer; font-size: 13px; font-family: inherit;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(0,0,0,0.05);
+      border-radius: 18px; cursor: pointer; font-size: 13px; font-family: inherit;
       color: #1a1a1a; font-weight: 500; text-align: left;
-      transition: all 0.16s; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
     }
     .tbc-chip::before {
-      content: '\\21B3'; color: #e0322c; font-weight: 700; font-size: 14px;
+      content: '\\21B3'; color: #e0322c; font-weight: 700; font-size: 15px;
       flex-shrink: 0;
     }
     .tbc-chip:hover {
-      border-color: #e0322c; background: #fff7f7;
-      transform: translateX(3px);
+      background: rgba(255,255,255,0.95);
+      border-color: rgba(224,50,44,0.2);
+      transform: translateX(4px) scale(1.01);
+      box-shadow: 0 4px 16px rgba(224,50,44,0.08);
     }
   `;
   const style = document.createElement('style');
@@ -358,7 +447,7 @@
         <button class="tbc-attach" aria-label="Attach photo" title="Send a photo (JPEG)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
         <input class="tbc-input" type="text" placeholder="Ask about tile, sizing, or your project..." />
       </div>
-      <button class="tbc-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      <button class="tbc-send"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94l18.04-8.01a.75.75 0 000-1.36L3.478 2.405z"/></svg></button>
     </div>
   `;
   document.body.appendChild(panel);
