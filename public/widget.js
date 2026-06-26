@@ -62,228 +62,476 @@
 
   // ---------- Styles ----------
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+    /* ===== Design tokens =====
+       Liquid glass · minimalist · black / white / red accent
+       --tbc-accent is the single red used for emphasis. */
+    .tbc-bubble, .tbc-panel {
+      --tbc-bg: #ffffff;
+      --tbc-surface: rgba(255, 255, 255, 0.72);
+      --tbc-surface-strong: rgba(255, 255, 255, 0.92);
+      --tbc-ink: #0a0a0a;
+      --tbc-ink-2: #1a1a1a;
+      --tbc-muted: rgba(10, 10, 10, 0.55);
+      --tbc-soft: rgba(10, 10, 10, 0.06);
+      --tbc-line: rgba(10, 10, 10, 0.08);
+      --tbc-accent: #e11d2e;
+      --tbc-accent-soft: rgba(225, 29, 46, 0.10);
+      --tbc-shadow-lg: 0 24px 60px -20px rgba(10, 10, 10, 0.28), 0 8px 20px -8px rgba(10, 10, 10, 0.16);
+      --tbc-shadow-md: 0 8px 24px -6px rgba(10, 10, 10, 0.18), 0 2px 6px rgba(10, 10, 10, 0.06);
+      --tbc-shadow-sm: 0 2px 8px rgba(10, 10, 10, 0.06);
+      --tbc-radius-pill: 999px;
+      --tbc-radius-card: 22px;
+      --tbc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ===== Floating launcher (the bubble) ===== */
     .tbc-bubble {
       position: fixed; bottom: 24px; right: 24px; z-index: 99999;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: #111; color: white;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: radial-gradient(120% 120% at 30% 20%, #1f1f1f 0%, #0a0a0a 60%);
+      color: white;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow:
+        0 10px 30px -8px rgba(10, 10, 10, 0.55),
+        0 2px 8px rgba(10, 10, 10, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s;
+      transition: transform 0.35s var(--tbc-ease), box-shadow 0.3s var(--tbc-ease);
+      overflow: hidden;
+    }
+    /* Liquid red glow that breathes behind the icon */
+    .tbc-bubble::before {
+      content: ''; position: absolute; inset: -40%;
+      background: radial-gradient(circle at 30% 30%, rgba(225, 29, 46, 0.55), transparent 55%);
+      filter: blur(18px); opacity: 0.6;
+      animation: tbc-breathe 4.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .tbc-bubble::after {
+      content: ''; position: absolute; top: 6px; right: 6px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--tbc-accent);
+      box-shadow: 0 0 0 3px #ffffff, 0 0 12px rgba(225, 29, 46, 0.6);
+      animation: tbc-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes tbc-breathe {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.15); opacity: 0.75; }
+    }
+    @keyframes tbc-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.85); opacity: 0.7; }
     }
     .tbc-bubble:hover {
-      transform: scale(1.06);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.1);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow:
+        0 18px 40px -10px rgba(225, 29, 46, 0.35),
+        0 6px 18px rgba(10, 10, 10, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
-    .tbc-bubble svg { width: 24px; height: 24px; }
+    .tbc-bubble:active { transform: translateY(0) scale(0.97); }
+    .tbc-bubble svg { width: 26px; height: 26px; position: relative; z-index: 1; }
 
+    /* ===== The panel (liquid glass card) ===== */
     .tbc-panel {
-      position: fixed; bottom: 96px; right: 24px; z-index: 99999;
+      position: fixed; bottom: 100px; right: 24px; z-index: 99999;
       width: 400px; max-width: calc(100vw - 32px);
-      height: 620px; max-height: calc(100vh - 120px);
-      background: #fafaf9; border-radius: 20px;
-      border: 1px solid rgba(0,0,0,0.06);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      height: 640px; max-height: calc(100vh - 130px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.78) 100%);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        var(--tbc-shadow-lg),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
       display: none; flex-direction: column;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       overflow: hidden;
-      animation: tbc-fadeUp 0.25s cubic-bezier(0.22,1,0.36,1);
+      animation: tbc-panelIn 0.4s var(--tbc-ease);
+      color: var(--tbc-ink);
     }
-    @keyframes tbc-fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Soft red corona bleeding from the top — gives the glass its tint */
+    .tbc-panel::before {
+      content: ''; position: absolute; top: -120px; right: -80px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(225, 29, 46, 0.22), transparent 65%);
+      filter: blur(40px); pointer-events: none; z-index: 0;
+    }
+    .tbc-panel::after {
+      content: ''; position: absolute; bottom: -100px; left: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(10, 10, 10, 0.10), transparent 70%);
+      filter: blur(30px); pointer-events: none; z-index: 0;
+    }
+    @keyframes tbc-panelIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .tbc-panel.open { display: flex; }
+    .tbc-panel > * { position: relative; z-index: 1; }
 
+    /* ===== Header ===== */
     .tbc-header {
-      padding: 16px 20px; background: #111; color: white;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      color: white;
       display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .tbc-header::before {
+      content: ''; position: absolute; top: 0; right: -40px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(225, 29, 46, 0.35), transparent 70%);
+      filter: blur(24px); pointer-events: none;
     }
     .tbc-header-title {
       font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+      display: inline-flex; align-items: center; gap: 10px;
+      position: relative; z-index: 1;
+    }
+    .tbc-header-title::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--tbc-accent);
+      box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.2), 0 0 12px rgba(225, 29, 46, 0.7);
+      animation: tbc-pulse 2.4s ease-in-out infinite;
     }
     .tbc-close {
-      cursor: pointer; background: none; border: none;
-      color: rgba(255,255,255,0.5); font-size: 20px; line-height: 1;
-      padding: 0; transition: color 0.15s;
+      cursor: pointer; background: rgba(255, 255, 255, 0.08); border: none;
+      color: rgba(255, 255, 255, 0.7); font-size: 18px; line-height: 1;
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0; transition: background 0.2s var(--tbc-ease), color 0.2s, transform 0.2s;
+      position: relative; z-index: 1;
     }
-    .tbc-close:hover { color: white; }
+    .tbc-close:hover {
+      background: rgba(225, 29, 46, 0.85); color: white;
+      transform: rotate(90deg);
+    }
 
+    /* ===== Messages area ===== */
     .tbc-messages {
-      flex: 1; overflow-y: auto; padding: 24px 20px 16px;
-      display: flex; flex-direction: column; gap: 20px;
-      background: #fafaf9;
+      flex: 1; overflow-y: auto; padding: 22px 20px 16px;
+      display: flex; flex-direction: column; gap: 18px;
+      background: transparent;
+      scroll-behavior: smooth;
     }
-    .tbc-messages::-webkit-scrollbar { width: 4px; }
+    .tbc-messages::-webkit-scrollbar { width: 5px; }
     .tbc-messages::-webkit-scrollbar-track { background: transparent; }
-    .tbc-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 4px; }
+    .tbc-messages::-webkit-scrollbar-thumb {
+      background: rgba(10, 10, 10, 0.12); border-radius: 999px;
+    }
+    .tbc-messages::-webkit-scrollbar-thumb:hover { background: rgba(10, 10, 10, 0.22); }
 
+    /* ===== Message rows ===== */
     .tbc-row {
       display: flex; gap: 10px; align-items: flex-start;
-      animation: tbc-fadeUp 0.25s cubic-bezier(0.22,1,0.36,1);
+      animation: tbc-rowIn 0.35s var(--tbc-ease) both;
+    }
+    @keyframes tbc-rowIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .tbc-row.user { flex-direction: column; align-items: flex-end; }
     .tbc-row.bot, .tbc-row.agent { flex-direction: row; align-items: flex-start; }
     .tbc-row-avatar {
-      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 600; font-size: 11px; margin-top: 1px;
+      font-weight: 700; font-size: 11px; margin-top: 2px;
+      letter-spacing: 0.02em;
     }
-    .tbc-row.bot .tbc-row-avatar, .tbc-row.agent .tbc-row-avatar {
-      background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.45);
-      border: 1px solid rgba(0,0,0,0.08);
+    .tbc-row.bot .tbc-row-avatar {
+      background: linear-gradient(135deg, #0a0a0a, #2a2a2a);
+      color: white;
+      box-shadow: 0 4px 12px -2px rgba(10, 10, 10, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    .tbc-row.agent .tbc-row-avatar {
+      background: linear-gradient(135deg, var(--tbc-accent), #b81020);
+      color: white;
+      box-shadow: 0 4px 12px -2px rgba(225, 29, 46, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     .tbc-row.user .tbc-row-avatar { display: none; }
     .tbc-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
     .tbc-row-label { display: none; }
 
+    /* ===== Message bubbles ===== */
     .tbc-msg {
-      line-height: 1.65; font-size: 13px; word-wrap: break-word;
+      line-height: 1.6; font-size: 13.5px; word-wrap: break-word;
+      letter-spacing: -0.005em;
     }
     .tbc-msg.user {
-      max-width: 80%; padding: 10px 14px;
-      background: linear-gradient(135deg, #f5f5f0, #eeede8);
-      color: #111; border-radius: 16px 16px 4px 16px;
-      border: 1px solid rgba(0,0,0,0.05);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+      max-width: 82%; padding: 11px 16px;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 100%);
+      color: #ffffff;
+      border-radius: 20px 20px 6px 20px;
+      box-shadow: 0 6px 16px -6px rgba(10, 10, 10, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .tbc-msg.bot, .tbc-msg.agent {
-      color: #1a1a1a; padding: 2px 0;
+      max-width: 85%; padding: 11px 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: var(--tbc-ink-2);
+      border: 1px solid var(--tbc-line);
+      border-radius: 20px 20px 20px 6px;
+      box-shadow: var(--tbc-shadow-sm);
     }
-    .tbc-msg.agent { border-left: 2px solid #e0322c; padding-left: 12px; }
+    .tbc-msg.agent {
+      border-color: rgba(225, 29, 46, 0.25);
+      box-shadow: 0 4px 14px -6px rgba(225, 29, 46, 0.18), inset 0 0 0 1px rgba(225, 29, 46, 0.05);
+    }
     .tbc-msg.system {
-      align-self: center; color: rgba(0,0,0,0.35); font-size: 12px;
-      text-align: center; padding: 4px 0; font-weight: 500;
+      align-self: center; color: var(--tbc-muted); font-size: 11.5px;
+      text-align: center; padding: 6px 14px; font-weight: 500;
+      background: rgba(10, 10, 10, 0.04);
+      border-radius: 999px;
+      letter-spacing: 0.01em;
     }
-    .tbc-msg a { color: #e0322c; text-decoration: none; font-weight: 500; }
+    .tbc-msg a { color: var(--tbc-accent); text-decoration: none; font-weight: 600; }
     .tbc-msg a:hover { text-decoration: underline; }
+    .tbc-msg.user a { color: #ff8a98; }
 
+    /* ===== Typing indicator ===== */
     .tbc-typing {
-      display: flex; gap: 4px; align-items: center;
-      padding: 6px 0; margin-left: 38px;
+      display: inline-flex; gap: 4px; align-items: center;
+      padding: 12px 16px; margin-left: 40px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--tbc-line);
+      border-radius: 20px 20px 20px 6px;
+      width: fit-content;
+      box-shadow: var(--tbc-shadow-sm);
     }
     .tbc-typing span {
-      width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.15);
-      animation: tbc-dot 1.2s infinite ease-in-out;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--tbc-accent);
+      animation: tbc-dot 1.3s infinite ease-in-out;
     }
     .tbc-typing span:nth-child(2) { animation-delay: 0.15s; }
     .tbc-typing span:nth-child(3) { animation-delay: 0.3s; }
     @keyframes tbc-dot {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
-      30% { transform: translateY(-4px); opacity: 1; }
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+      30% { transform: translateY(-5px); opacity: 1; }
     }
 
+    /* ===== Composer (input area) ===== */
     .tbc-composer {
-      padding: 12px 16px; background: #fafaf9;
+      padding: 12px 16px 16px; background: transparent;
     }
     .tbc-composer-card {
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 16px; background: rgba(255,255,255,0.7);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02);
-      transition: box-shadow 0.2s, border-color 0.2s;
+      border: 1px solid var(--tbc-line);
+      border-radius: var(--tbc-radius-card);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 0 4px 14px -4px rgba(10, 10, 10, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      transition: box-shadow 0.25s var(--tbc-ease), border-color 0.25s, transform 0.25s;
       display: flex; flex-direction: column;
     }
     .tbc-composer-card:focus-within {
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
-      border-color: rgba(0,0,0,0.12);
+      box-shadow:
+        0 8px 28px -8px rgba(225, 29, 46, 0.25),
+        0 0 0 3px rgba(225, 29, 46, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      border-color: rgba(225, 29, 46, 0.35);
+      transform: translateY(-1px);
     }
     .tbc-input {
-      width: 100%; padding: 14px 16px 8px; border: none; background: transparent;
-      font-size: 13px; outline: none; font-family: inherit; color: #111;
-      resize: none; line-height: 1.6; box-sizing: border-box;
+      width: 100%; padding: 14px 18px 8px; border: none; background: transparent;
+      font-size: 13.5px; outline: none; font-family: inherit; color: var(--tbc-ink);
+      resize: none; line-height: 1.55; box-sizing: border-box;
     }
-    .tbc-input::placeholder { color: rgba(0,0,0,0.22); }
+    .tbc-input::placeholder { color: rgba(10, 10, 10, 0.32); }
     .tbc-composer-footer {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px;
+      padding: 8px 10px 10px;
     }
-    .tbc-composer-tools { display: flex; align-items: center; gap: 4px; }
+    .tbc-composer-tools { display: flex; align-items: center; gap: 6px; }
     .tbc-attach {
-      background: none; border: 1px solid rgba(0,0,0,0.08); cursor: pointer;
-      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(10, 10, 10, 0.04); border: none; cursor: pointer;
+      width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      color: rgba(0,0,0,0.35); transition: background 0.15s, color 0.15s;
+      color: rgba(10, 10, 10, 0.55); transition: background 0.2s var(--tbc-ease), color 0.2s, transform 0.2s;
       padding: 0;
     }
-    .tbc-attach:hover { background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.5); }
-    .tbc-attach svg { width: 14px; height: 14px; }
-    .tbc-send {
-      width: 28px; height: 28px; border: none; border-radius: 10px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: opacity 0.15s, transform 0.1s; padding: 0;
+    .tbc-attach:hover {
+      background: rgba(225, 29, 46, 0.10); color: var(--tbc-accent);
+      transform: scale(1.08);
     }
-    .tbc-send:not(:disabled) { background: #111; color: white; }
-    .tbc-send:disabled { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.2); cursor: default; }
-    .tbc-send:not(:disabled):hover { opacity: 0.85; }
-    .tbc-send:not(:disabled):active { transform: scale(0.95); }
+    .tbc-attach svg { width: 15px; height: 15px; }
+    .tbc-send {
+      width: 36px; height: 36px; border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s var(--tbc-ease), box-shadow 0.2s, background 0.2s;
+      padding: 0;
+    }
+    .tbc-send:not(:disabled) {
+      background: linear-gradient(135deg, var(--tbc-accent) 0%, #b81020 100%);
+      color: white;
+      box-shadow: 0 4px 14px -4px rgba(225, 29, 46, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .tbc-send:disabled {
+      background: rgba(10, 10, 10, 0.08); color: rgba(10, 10, 10, 0.25); cursor: default;
+    }
+    .tbc-send:not(:disabled):hover {
+      transform: translateY(-1px) scale(1.05);
+      box-shadow: 0 8px 20px -4px rgba(225, 29, 46, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+    .tbc-send:not(:disabled):active { transform: translateY(0) scale(0.96); }
     .tbc-send svg { width: 16px; height: 16px; }
-    .tbc-img-preview { max-width: 180px; border-radius: 12px; margin-top: 4px; }
+    .tbc-img-preview {
+      max-width: 200px; border-radius: 16px; margin-top: 4px;
+      box-shadow: var(--tbc-shadow-md);
+    }
 
-    .tbc-handoff-row { padding: 0 16px 8px; }
+    /* ===== Handoff row ===== */
+    .tbc-handoff-row { padding: 0 16px 6px; }
     .tbc-handoff-btn {
-      width: 100%; padding: 10px;
-      background: transparent; color: rgba(0,0,0,0.55);
-      border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer;
-      font-weight: 500; font-size: 13px; font-family: inherit;
-      transition: all 0.15s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 11px 14px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: var(--tbc-ink-2);
+      border: 1px solid var(--tbc-line);
+      border-radius: var(--tbc-radius-pill); cursor: pointer;
+      font-weight: 600; font-size: 12.5px; font-family: inherit;
+      letter-spacing: 0.005em;
+      transition: all 0.25s var(--tbc-ease);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: var(--tbc-shadow-sm);
     }
     .tbc-handoff-btn::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22c55e;
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 8px rgba(34, 197, 94, 0.6);
+      animation: tbc-pulse 2.4s ease-in-out infinite;
     }
-    .tbc-handoff-btn:hover { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.12); }
-    .tbc-handoff-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .tbc-handoff-btn:hover {
+      background: rgba(10, 10, 10, 0.92); color: white;
+      border-color: transparent;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -6px rgba(10, 10, 10, 0.35);
+    }
+    .tbc-handoff-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+    /* ===== Leave-a-message form ===== */
     .tbc-leave-form {
-      padding: 16px; background: #fafaf9;
-      display: flex; flex-direction: column; gap: 8px;
+      padding: 16px; background: transparent;
+      display: flex; flex-direction: column; gap: 10px;
     }
     .tbc-leave-form input, .tbc-leave-form textarea {
-      padding: 10px 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
+      padding: 12px 16px; border: 1px solid var(--tbc-line); border-radius: 16px;
       font-size: 13px; font-family: inherit; outline: none;
-      background: white; transition: border-color 0.15s;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: var(--tbc-ink);
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .tbc-leave-form input::placeholder, .tbc-leave-form textarea::placeholder {
+      color: rgba(10, 10, 10, 0.35);
     }
     .tbc-leave-form input:focus, .tbc-leave-form textarea:focus {
-      border-color: rgba(0,0,0,0.15);
+      border-color: rgba(225, 29, 46, 0.4);
+      box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.08);
+      background: rgba(255, 255, 255, 0.95);
     }
-    .tbc-leave-form textarea { resize: vertical; min-height: 60px; }
+    .tbc-leave-form textarea { resize: vertical; min-height: 72px; }
     .tbc-leave-form button {
-      padding: 10px; background: #111; color: white; border: none;
-      border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px;
-      transition: opacity 0.15s;
+      padding: 12px; background: linear-gradient(135deg, var(--tbc-accent) 0%, #b81020 100%);
+      color: white; border: none;
+      border-radius: var(--tbc-radius-pill); cursor: pointer;
+      font-weight: 600; font-size: 13px;
+      letter-spacing: 0.01em;
+      transition: transform 0.2s var(--tbc-ease), box-shadow 0.2s;
+      box-shadow: 0 6px 18px -4px rgba(225, 29, 46, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
     }
-    .tbc-leave-form button:hover { opacity: 0.85; }
+    .tbc-leave-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px -6px rgba(225, 29, 46, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+    .tbc-leave-form button:active { transform: translateY(0) scale(0.98); }
 
-    .tbc-rating { align-self: center; text-align: center; padding: 16px 8px; }
-    .tbc-rating-q { color: rgba(0,0,0,0.45); font-size: 13px; margin-bottom: 10px; font-weight: 500; }
+    /* ===== Rating ===== */
+    .tbc-rating {
+      align-self: center; text-align: center; padding: 16px 8px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--tbc-line);
+      border-radius: 20px;
+      box-shadow: var(--tbc-shadow-sm);
+      min-width: 200px;
+    }
+    .tbc-rating-q { color: var(--tbc-ink-2); font-size: 13px; margin-bottom: 12px; font-weight: 600; }
     .tbc-rating-btns { display: flex; gap: 10px; justify-content: center; }
     .tbc-rating-btns button {
-      font-size: 22px; background: white; border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 12px; width: 52px; height: 44px; cursor: pointer;
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--tbc-line);
+      border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.15s, border-color 0.15s;
+      transition: transform 0.25s var(--tbc-ease), border-color 0.2s, box-shadow 0.2s;
     }
-    .tbc-rating-btns button:hover { transform: scale(1.08); border-color: rgba(0,0,0,0.15); }
+    .tbc-rating-btns button:hover {
+      transform: scale(1.12) translateY(-2px);
+      border-color: rgba(225, 29, 46, 0.35);
+      box-shadow: 0 8px 18px -4px rgba(225, 29, 46, 0.25);
+    }
 
+    /* ===== Quick-reply chips ===== */
     .tbc-buttons {
-      display: flex; flex-direction: column; gap: 6px;
-      padding: 4px 0 8px; margin-left: 38px;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 4px 0 8px; margin-left: 40px;
     }
     .tbc-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 14px; background: white;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 12px; cursor: pointer; font-size: 13px; font-family: inherit;
-      color: #1a1a1a; font-weight: 500;
-      transition: background 0.15s, border-color 0.15s;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--tbc-line);
+      border-radius: var(--tbc-radius-pill); cursor: pointer; font-size: 12.5px; font-family: inherit;
+      color: var(--tbc-ink-2); font-weight: 500;
+      transition: background 0.2s var(--tbc-ease), border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: var(--tbc-shadow-sm);
     }
     .tbc-chip::before {
-      content: '\\2197'; color: rgba(0,0,0,0.3); font-size: 12px;
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--tbc-accent);
     }
-    .tbc-chip:hover { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.12); }
+    .tbc-chip:hover {
+      background: var(--tbc-ink); color: white;
+      border-color: transparent;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px -4px rgba(10, 10, 10, 0.3);
+    }
+    .tbc-chip:hover::before { background: var(--tbc-accent); box-shadow: 0 0 8px var(--tbc-accent); }
+
+    /* ===== Mobile tuning ===== */
+    @media (max-width: 480px) {
+      .tbc-panel {
+        bottom: 92px; right: 12px; left: 12px;
+        width: auto; max-width: none;
+        height: calc(100vh - 120px);
+        border-radius: 24px;
+      }
+      .tbc-bubble { bottom: 18px; right: 18px; }
+    }
+
+    /* ===== Reduced motion ===== */
+    @media (prefers-reduced-motion: reduce) {
+      .tbc-bubble::before, .tbc-bubble::after,
+      .tbc-header-title::before, .tbc-handoff-btn::before {
+        animation: none;
+      }
+      .tbc-panel, .tbc-row { animation: none; }
+      .tbc-bubble, .tbc-send, .tbc-handoff-btn, .tbc-chip,
+      .tbc-close, .tbc-attach, .tbc-rating-btns button,
+      .tbc-leave-form button, .tbc-composer-card {
+        transition: none;
+      }
+    }
   `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -292,7 +540,7 @@
   // ---------- DOM ----------
   const bubble = document.createElement('div');
   bubble.className = 'tbc-bubble';
-  bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`;
+  bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><circle cx="9" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="16" cy="11.5" r="0.9" fill="currentColor" stroke="none"/></svg>`;
   document.body.appendChild(bubble);
 
   const panel = document.createElement('div');
