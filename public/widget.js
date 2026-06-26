@@ -138,40 +138,15 @@
       font-weight: 700; font-size: 16px; letter-spacing: -0.02em;
       position: relative; z-index: 1;
     }
-    .tbc-avatar-sm {
-      width: 42px; height: 42px; border-radius: 16px; flex-shrink: 0;
-      background: linear-gradient(135deg, #e0322c 0%, #c0271f 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 16px; color: white;
-      box-shadow: 0 4px 12px rgba(224,50,44,0.35);
-    }
-    .tbc-subtitle {
-      font-size: 11.5px; color: rgba(255,255,255,0.5); font-weight: 500;
-      margin-top: 3px; display: flex; align-items: center; gap: 6px;
-    }
-    .tbc-status-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: #555;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .tbc-status-dot.online {
-      background: #22c55e;
-      box-shadow: 0 0 8px rgba(34,197,94,0.6);
-      animation: tbc-pulse 2s infinite;
-    }
-    @keyframes tbc-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-      50% { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
-    }
     .tbc-close {
       cursor: pointer; border: none; position: relative; z-index: 1;
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(8px);
-      color: rgba(255,255,255,0.7); font-size: 18px; line-height: 1;
-      width: 36px; height: 36px; border-radius: 12px;
+      background: transparent;
+      color: rgba(255,255,255,0.6); font-size: 22px; line-height: 1;
+      width: 36px; height: 36px;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s, color 0.2s, transform 0.2s;
+      transition: color 0.2s, transform 0.2s;
     }
-    .tbc-close:hover { background: rgba(255,255,255,0.16); color: white; transform: rotate(90deg); }
+    .tbc-close:hover { color: white; transform: rotate(90deg); }
 
     .tbc-messages {
       flex: 1; overflow-y: auto; padding: 22px 18px 14px;
@@ -269,23 +244,17 @@
       backdrop-filter: blur(16px);
       border-top: 1px solid rgba(0,0,0,0.04);
     }
-    .tbc-input-wrap {
-      flex: 1; display: flex; align-items: center; gap: 4px;
-      background: rgba(245,245,245,0.7);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(0,0,0,0.06);
-      border-radius: 22px;
-      padding: 5px 6px 5px 8px;
-      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-    }
-    .tbc-input-wrap:focus-within {
-      border-color: rgba(0,0,0,0.15);
-      background: rgba(255,255,255,0.9);
-      box-shadow: 0 0 0 4px rgba(224,50,44,0.06);
-    }
     .tbc-input {
-      flex: 1; padding: 9px 8px; border: none; background: transparent;
-      font-size: 13.5px; outline: none; font-family: inherit; color: #1a1a1a;
+      flex: 1; padding: 12px 18px; border: none;
+      background: rgba(245,245,245,0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 50px; font-size: 13.5px; outline: none;
+      font-family: inherit; color: #1a1a1a;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .tbc-input:focus {
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 3px rgba(224,50,44,0.06);
     }
     .tbc-input::placeholder { color: #aaa; }
     .tbc-send {
@@ -305,12 +274,12 @@
     .tbc-send svg { width: 20px; height: 20px; }
 
     .tbc-attach {
-      background: none; border: none; cursor: pointer; padding: 7px;
-      display: flex; align-items: center; color: #999; flex-shrink: 0;
-      border-radius: 50%; transition: all 0.2s;
+      background: none; border: none; cursor: pointer; padding: 4px;
+      display: flex; align-items: center; color: #aaa; flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
     }
-    .tbc-attach:hover { color: #e0322c; background: rgba(224,50,44,0.06); transform: scale(1.1); }
-    .tbc-attach svg { width: 18px; height: 18px; }
+    .tbc-attach:hover { color: #e0322c; transform: scale(1.15); }
+    .tbc-attach svg { width: 16px; height: 16px; }
     .tbc-img-preview { max-width: 180px; border-radius: 16px; margin-top: 4px; }
 
     .tbc-handoff-row { padding: 0 18px 14px; }
@@ -319,7 +288,7 @@
       background: rgba(255,255,255,0.7);
       backdrop-filter: blur(8px);
       color: #111; border: 1.5px solid rgba(0,0,0,0.08);
-      border-radius: 22px; cursor: pointer;
+      border-radius: 50px; cursor: pointer;
       font-weight: 600; font-size: 13px; font-family: inherit;
       transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -343,22 +312,22 @@
       display: flex; flex-direction: column; gap: 10px;
     }
     .tbc-leave-form input, .tbc-leave-form textarea {
-      padding: 12px 16px;
+      padding: 12px 18px;
       border: 1.5px solid rgba(0,0,0,0.06);
-      border-radius: 16px; font-size: 13px; font-family: inherit; outline: none;
+      border-radius: 50px; font-size: 13px; font-family: inherit; outline: none;
       background: rgba(250,250,250,0.7);
       backdrop-filter: blur(8px);
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .tbc-leave-form input:focus, .tbc-leave-form textarea:focus {
       border-color: rgba(0,0,0,0.15);
-      box-shadow: 0 0 0 4px rgba(224,50,44,0.06);
+      box-shadow: 0 0 0 3px rgba(224,50,44,0.06);
     }
-    .tbc-leave-form textarea { resize: vertical; min-height: 64px; }
+    .tbc-leave-form textarea { resize: vertical; min-height: 64px; border-radius: 20px; }
     .tbc-leave-form button {
       padding: 12px;
       background: linear-gradient(135deg, #e0322c, #c4271f);
-      color: white; border: none; border-radius: 16px;
+      color: white; border: none; border-radius: 50px;
       cursor: pointer; font-weight: 600; font-size: 14px;
       box-shadow: 0 4px 12px rgba(224,50,44,0.25);
       transition: transform 0.2s, box-shadow 0.2s;
@@ -429,11 +398,7 @@
   panel.innerHTML = `
     <div class="tbc-header">
       <span class="tbc-header-title">
-        <span class="tbc-avatar-sm">T</span>
-        <span>
-          <span class="tbc-title-text">Tilesbay Assistant</span>
-          <div class="tbc-subtitle"><span class="tbc-status-dot"></span><span class="tbc-status-text">Ready to help</span></div>
-        </span>
+        <span class="tbc-title-text">Tilesbay Assistant</span>
       </span>
       <button class="tbc-close" aria-label="Close">&times;</button>
     </div>
@@ -443,10 +408,8 @@
     </div>
     <div class="tbc-input-row">
       <input class="tbc-file-input" type="file" accept="image/jpeg" style="display:none;" />
-      <div class="tbc-input-wrap">
-        <button class="tbc-attach" aria-label="Attach photo" title="Send a photo (JPEG)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-        <input class="tbc-input" type="text" placeholder="Ask about tile, sizing, or your project..." />
-      </div>
+      <button class="tbc-attach" aria-label="Attach photo" title="Send a photo (JPEG)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
+      <input class="tbc-input" type="text" placeholder="Ask about tile, sizing, or your project..." />
       <button class="tbc-send"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94l18.04-8.01a.75.75 0 000-1.36L3.478 2.405z"/></svg></button>
     </div>
   `;
@@ -462,7 +425,7 @@
   const attachBtn = panel.querySelector('.tbc-attach');
   const fileInput = panel.querySelector('.tbc-file-input');
   const titleText = panel.querySelector('.tbc-title-text');
-  const statusDot = panel.querySelector('.tbc-status-dot');
+  const statusDot = panel.querySelector('.tbc-status-dot'); // may be null
 
   // ---------- State ----------
   const MODE = { BOT: 'bot', CONNECTING: 'connecting', AGENT: 'agent', LEAVE: 'leave' };
@@ -804,7 +767,7 @@
           // Show real name initially, then swap to alias if one exists
           titleText.textContent = realName;
           agentDisplayName = realName;
-          statusDot.classList.add('online');
+          if (statusDot) statusDot.classList.add('online');
           var statusTextEl = panel.querySelector('.tbc-status-text');
           if (statusTextEl) statusTextEl.textContent = 'Live agent';
           addMessage('system', 'You\'re now chatting with ' + realName + '.', false);
@@ -866,7 +829,7 @@
     mode = MODE.BOT;
     titleText.textContent = 'Tilesbay Assistant';
     agentDisplayName = 'Agent';
-    statusDot.classList.remove('online');
+    if (statusDot) statusDot.classList.remove('online');
     var statusTextEl = panel.querySelector('.tbc-status-text');
     if (statusTextEl) statusTextEl.textContent = 'Ready to help';
     handoffRow.style.display = '';
