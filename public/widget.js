@@ -202,17 +202,12 @@
       animation: tbc-pulse 2.4s ease-in-out infinite;
     }
     .tbc-close {
-      cursor: pointer; background: rgba(255, 255, 255, 0.08); border: none;
-      color: rgba(255, 255, 255, 0.7); font-size: 18px; line-height: 1;
-      width: 30px; height: 30px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0; transition: background 0.2s var(--tbc-ease), color 0.2s, transform 0.2s;
-      position: relative; z-index: 1;
+      cursor: pointer; background: none; border: none;
+      color: #ffffff; font-size: 22px; line-height: 1;
+      padding: 0 4px; transition: opacity 0.15s var(--tbc-ease);
+      position: relative; z-index: 1; opacity: 0.85;
     }
-    .tbc-close:hover {
-      background: rgba(225, 29, 46, 0.85); color: white;
-      transform: rotate(90deg);
-    }
+    .tbc-close:hover { opacity: 1; }
 
     /* ===== Messages area ===== */
     .tbc-messages {
@@ -323,66 +318,51 @@
       padding: 12px 16px 16px; background: transparent;
     }
     .tbc-composer-card {
-      border: 1px solid var(--tbc-line);
+      border: 1px solid transparent;
       border-radius: var(--tbc-radius-card);
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      box-shadow: 0 4px 14px -4px rgba(10, 10, 10, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      background: transparent;
       transition: box-shadow 0.25s var(--tbc-ease), border-color 0.25s, transform 0.25s;
       display: flex; flex-direction: column;
     }
     .tbc-composer-card:focus-within {
       box-shadow:
         0 8px 28px -8px rgba(225, 29, 46, 0.25),
-        0 0 0 3px rgba(225, 29, 46, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-      border-color: rgba(225, 29, 46, 0.35);
-      transform: translateY(-1px);
+        0 0 0 3px rgba(225, 29, 46, 0.10);
+      border-color: rgba(225, 29, 46, 0.45);
     }
     .tbc-input {
       width: 100%; padding: 14px 18px 8px; border: none; background: transparent;
       font-size: 13.5px; outline: none; font-family: inherit; color: var(--tbc-ink);
       resize: none; line-height: 1.55; box-sizing: border-box;
     }
-    .tbc-input::placeholder { color: rgba(10, 10, 10, 0.32); }
+    .tbc-input::placeholder { color: rgba(10, 10, 10, 0.35); }
     .tbc-composer-footer {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 10px 10px;
+      padding: 4px 14px 10px;
     }
     .tbc-composer-tools { display: flex; align-items: center; gap: 6px; }
     .tbc-attach {
-      background: rgba(10, 10, 10, 0.04); border: none; cursor: pointer;
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: rgba(10, 10, 10, 0.55); transition: background 0.2s var(--tbc-ease), color 0.2s, transform 0.2s;
-      padding: 0;
+      background: none; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: rgba(10, 10, 10, 0.5);
+      padding: 4px;
+      transition: color 0.2s var(--tbc-ease);
     }
-    .tbc-attach:hover {
-      background: rgba(225, 29, 46, 0.10); color: var(--tbc-accent);
-      transform: scale(1.08);
-    }
-    .tbc-attach svg { width: 15px; height: 15px; }
+    .tbc-attach:hover { color: var(--tbc-accent); }
+    .tbc-attach svg { width: 18px; height: 18px; }
     .tbc-send {
-      width: 36px; height: 36px; border: none; border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s var(--tbc-ease), box-shadow 0.2s, background 0.2s;
-      padding: 0;
-    }
-    .tbc-send:not(:disabled) {
-      background: linear-gradient(135deg, var(--tbc-accent) 0%, #b81020 100%);
-      color: white;
-      box-shadow: 0 4px 14px -4px rgba(225, 29, 46, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      background: none; border: none; padding: 4px 2px; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--tbc-accent);
+      transition: opacity 0.15s var(--tbc-ease), transform 0.15s;
     }
     .tbc-send:disabled {
-      background: rgba(10, 10, 10, 0.08); color: rgba(10, 10, 10, 0.25); cursor: default;
+      color: rgba(10, 10, 10, 0.25); cursor: default;
     }
-    .tbc-send:not(:disabled):hover {
-      transform: translateY(-1px) scale(1.05);
-      box-shadow: 0 8px 20px -4px rgba(225, 29, 46, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    }
-    .tbc-send:not(:disabled):active { transform: translateY(0) scale(0.96); }
-    .tbc-send svg { width: 16px; height: 16px; }
+    .tbc-send:not(:disabled):hover { opacity: 0.75; }
+    .tbc-send:not(:disabled):active { transform: scale(0.95); }
+    .tbc-send svg { display: none; }
     .tbc-img-preview {
       max-width: 200px; border-radius: 16px; margin-top: 4px;
       box-shadow: var(--tbc-shadow-md);
@@ -564,7 +544,7 @@
           <div class="tbc-composer-tools">
             <button class="tbc-attach" aria-label="Attach photo" title="Send a photo (JPEG)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
           </div>
-          <button class="tbc-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          <button class="tbc-send" aria-label="Send">Send</button>
         </div>
       </div>
     </div>
