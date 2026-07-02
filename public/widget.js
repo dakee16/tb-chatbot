@@ -534,7 +534,7 @@
     </div>
     <div class="tbc-messages"></div>
     <div class="tbc-handoff-row">
-      <button class="tbc-handoff-btn">Talk to a human</button>
+      <button class="tbc-handoff-btn">Talk to an Agent</button>
     </div>
     <div class="tbc-composer">
       <div class="tbc-composer-card">
