@@ -11,6 +11,9 @@
 // email-capture form that posts a ticket to Zammad via /api/leave-message.
 //
 // Requires zammad-ws.js to be loaded first (widget.js loads it automatically).
+//
+// SHADOW DOM: The entire widget lives inside a Shadow DOM so that the host
+// page's CSS (Magento, Bootstrap, etc.) cannot bleed into the widget styles.
 
 (function () {
   // ---- Resolve backend + zammad host from this script's own URL ----
@@ -31,7 +34,6 @@
   const CLIENT_ID = 'tbc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
 
   // ---------- Visitor tracking ----------
-  // Track pages visited across the session (persists in sessionStorage)
   var pageHistory = [];
   try {
     var saved = window.sessionStorage.getItem('tbc_pages');
@@ -45,8 +47,6 @@
   // Detect device type
   var deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
 
-  // Zammad host can be overridden via data-zammad attr on the script tag;
-  // defaults to the CRM behind the same root domain.
   const ZAMMAD_WSS = scriptEl.getAttribute('data-zammad') || 'wss://crm.tilesbay.net/ws';
   const ZAMMAD_CHAT_ID = parseInt(scriptEl.getAttribute('data-chat-id') || '1', 10);
 
@@ -64,10 +64,18 @@
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-    /* ===== Design tokens =====
-       Liquid glass · minimalist · black / white / red accent
-       --tbc-accent is the single red used for emphasis. */
-    .tbc-bubble, .tbc-panel {
+    /* Reset — undo any inherited styles from the host page.
+       This is the key benefit of Shadow DOM: these rules only apply inside
+       the shadow root, and no host-page rules can reach in. We add a
+       minimal reset here to be extra safe. */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===== Design tokens ===== */
+    :host {
       --tbc-bg: #ffffff;
       --tbc-surface: rgba(255, 255, 255, 0.72);
       --tbc-surface-strong: rgba(255, 255, 255, 0.92);
@@ -84,6 +92,16 @@
       --tbc-radius-pill: 999px;
       --tbc-radius-card: 22px;
       --tbc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+      /* Ensure the host element itself doesn't interfere with page layout */
+      all: initial;
+      display: block;
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      z-index: 99999;
+      pointer-events: none;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     /* ===== Floating launcher (the bubble) ===== */
@@ -94,6 +112,7 @@
       color: white;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
+      pointer-events: auto;
       box-shadow:
         0 10px 30px -8px rgba(10, 10, 10, 0.55),
         0 2px 8px rgba(10, 10, 10, 0.25),
@@ -102,7 +121,6 @@
       transition: transform 0.35s var(--tbc-ease), box-shadow 0.3s var(--tbc-ease);
       overflow: hidden;
     }
-    /* Liquid red glow that breathes behind the icon */
     .tbc-bubble::before {
       content: ''; position: absolute; inset: -40%;
       background: radial-gradient(circle at 30% 30%, rgba(225, 29, 46, 0.55), transparent 55%);
@@ -153,8 +171,8 @@
       overflow: hidden;
       animation: tbc-panelIn 0.4s var(--tbc-ease);
       color: var(--tbc-ink);
+      pointer-events: auto;
     }
-    /* Soft red corona bleeding from the top — gives the glass its tint */
     .tbc-panel::before {
       content: ''; position: absolute; top: -120px; right: -80px;
       width: 280px; height: 280px; border-radius: 50%;
@@ -513,15 +531,22 @@
       }
     }
   `;
+
+  // ---------- Shadow DOM host ----------
+  const host = document.createElement('div');
+  host.id = 'tilesbay-chatbot-host';
+  document.body.appendChild(host);
+  const shadow = host.attachShadow({ mode: 'open' });
+
   const style = document.createElement('style');
   style.textContent = css;
-  document.head.appendChild(style);
+  shadow.appendChild(style);
 
   // ---------- DOM ----------
   const bubble = document.createElement('div');
   bubble.className = 'tbc-bubble';
   bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><circle cx="9" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="16" cy="11.5" r="0.9" fill="currentColor" stroke="none"/></svg>`;
-  document.body.appendChild(bubble);
+  shadow.appendChild(bubble);
 
   const panel = document.createElement('div');
   panel.className = 'tbc-panel';
@@ -549,7 +574,7 @@
       </div>
     </div>
   `;
-  document.body.appendChild(panel);
+  shadow.appendChild(panel);
 
 
   const messagesEl = panel.querySelector('.tbc-messages');
@@ -567,13 +592,13 @@
   // ---------- State ----------
   const MODE = { BOT: 'bot', CONNECTING: 'connecting', AGENT: 'agent', LEAVE: 'leave' };
   let mode = MODE.BOT;
-  let hadAgentChat = false;     // did this conversation reach a live agent?
-  let chatSessionId = null;     // Zammad chat session id (for rating)
-  let ratingShown = false;      // guard so rating UI shows once
-  const history = [];          // bot conversation [{role, content}]
-  const transcript = [];       // full visible transcript [{who, text}] for handoff
+  let hadAgentChat = false;
+  let chatSessionId = null;
+  let ratingShown = false;
+  const history = [];
+  const transcript = [];
   let isLoading = false;
-  let zw = null;               // ZammadWS instance
+  let zw = null;
   let agentTypingTimer = null;
 
   // ---------- Helpers ----------
@@ -595,7 +620,6 @@
     return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
   }
 
-  // Display name shown next to each message
   var agentDisplayName = 'Agent';
   function labelFor(kind) {
     if (kind === 'user') return 'You';
@@ -632,12 +656,12 @@
     label.className = 'tbc-row-label';
     label.innerHTML = labelFor(kind) + ' <span class="tbc-row-time">\u00B7 ' + nowTime() + '</span>';
 
-    const bubble = document.createElement('div');
-    bubble.className = `tbc-msg ${kind}`;
-    bubble.innerHTML = linkify(text);
+    const msgBubble = document.createElement('div');
+    msgBubble.className = `tbc-msg ${kind}`;
+    msgBubble.innerHTML = linkify(text);
 
     main.appendChild(label);
-    main.appendChild(bubble);
+    main.appendChild(msgBubble);
     row.appendChild(avatar);
     row.appendChild(main);
     messagesEl.appendChild(row);
@@ -659,26 +683,24 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
   function hideTyping() {
-    const el = document.getElementById('tbc-typing-indicator');
+    // Shadow DOM: can't use document.getElementById — query inside shadow root
+    const el = shadow.querySelector('#tbc-typing-indicator');
     if (el) el.remove();
   }
 
-  // Convert/strip basic markdown so it doesn't show literal ** _ etc.
   function stripMarkdown(s) {
     if (!s) return s;
     return s
-      .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold** -> bold
-      .replace(/(^|\s)\*(.+?)\*(?=\s|$)/g, '$1$2') // *italic* -> italic
-      .replace(/(^|\s)_(.+?)_(?=\s|$)/g, '$1$2')   // _italic_ -> italic
-      .replace(/`([^`]+)`/g, '$1')        // `code` -> code
-      .replace(/^#{1,6}\s+/gm, '')        // # headings
-      .replace(/^\s*[-*]\s+/gm, '• ');    // - bullets -> •
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/(^|\s)\*(.+?)\*(?=\s|$)/g, '$1$2')
+      .replace(/(^|\s)_(.+?)_(?=\s|$)/g, '$1$2')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^\s*[-*]\s+/gm, '• ');
   }
 
   function buildTranscriptText() {
     if (transcript.length === 0) return '(no prior conversation)';
-    // Zammad chat renders HTML, and plain \n get collapsed. Use <br> so the
-    // agent sees each turn on its own line.
     var lines = transcript.map(function (t) {
       return '<b>' + t.who + ':</b> ' + stripMarkdown(t.text);
     });
@@ -686,7 +708,6 @@
   }
 
   // ---------- INTERACTIVE BUTTONS ----------
-  // Parse [[BUTTONS: opt1 | opt2 | opt3]] from bot reply.
   function parseButtons(reply) {
     var match = reply.match(/\[\[BUTTONS:\s*(.+?)\]\]/i);
     if (!match) return { text: reply, buttons: null };
@@ -774,8 +795,6 @@
   }
 
   // ---------- BOT MODE ----------
-  // Send each bot exchange to the backend so a Zammad ticket is created (on the
-  // first message) and appended (subsequent messages). Fire-and-forget.
   let capturedContact = { name: null, email: null };
   function recordExchange(customerMsg, botReply) {
     try {
@@ -797,7 +816,6 @@
     } catch (e) {}
   }
 
-  // On handoff, upgrade the existing ticket (group + owner = agent).
   function notifyHandoff(group, agentName) {
     try {
       fetch(CHAT_TICKET_URL, {
@@ -832,11 +850,9 @@
         addMessage('bot', `Sorry, something went wrong: ${data.error}`);
       } else {
         let reply = data.reply || '';
-        // Bot-triggered handoff: reply contains [[HANDOFF]]
         const wantsHandoff = /\[\[HANDOFF\]\]/i.test(reply);
         reply = reply.replace(/\[\[HANDOFF\]\]/gi, '').trim();
         if (reply) {
-          // Parse interactive buttons if present
           var parsed = parseButtons(reply);
           var clean = stripMarkdown(parsed.text);
           addMessage('bot', clean);
@@ -901,14 +917,12 @@
           hadAgentChat = true;
           chatSessionId = zw.sessionId || null;
           var realName = agent && agent.name ? agent.name : 'Live Agent';
-          // Show real name initially, then swap to alias if one exists
           titleText.textContent = realName;
           agentDisplayName = realName;
           if (statusDot) statusDot.classList.add('online');
           var statusTextEl = panel.querySelector('.tbc-status-text');
           if (statusTextEl) statusTextEl.textContent = 'Live agent';
           addMessage('system', 'You\'re now chatting with ' + realName + '.', false);
-          // Look up alias asynchronously
           fetch(ALIAS_URL + '?name=' + encodeURIComponent(realName))
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -925,7 +939,6 @@
               }
             })
             .catch(function () {});
-          // Upgrade the existing bot ticket: set owner to this agent.
           notifyHandoff(null, realName);
           const dump = buildTranscriptText();
           zw.sendMessage(dump);
@@ -973,7 +986,7 @@
     if (zw) { try { zw.close(); } catch (e) {} zw = null; }
   }
 
-  // ---------- RATING (after a live-agent chat) ----------
+  // ---------- RATING ----------
   function showRating() {
     if (ratingShown || !hadAgentChat) return;
     ratingShown = true;
@@ -991,20 +1004,19 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
     function sendRating(value) {
-      // optimistic UI: replace with a thank-you immediately
       wrap.innerHTML = '<div class="tbc-rating-q">Thanks for your feedback!</div>';
       fetch(RATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: chatSessionId, client_id: CLIENT_ID, rating: value }),
-      }).catch(function () { /* non-fatal */ });
+      }).catch(function () {});
     }
 
     wrap.querySelector('.tbc-rate-up').addEventListener('click', function () { sendRating('up'); });
     wrap.querySelector('.tbc-rate-down').addEventListener('click', function () { sendRating('down'); });
   }
 
-  // ---------- LEAVE-A-MESSAGE (offline fallback) ----------
+  // ---------- LEAVE-A-MESSAGE ----------
   function showLeaveForm() {
     mode = MODE.LEAVE;
     inputRow.style.display = 'none';
@@ -1092,7 +1104,6 @@
 
   closeBtn.addEventListener('click', () => {
     panel.classList.remove('open');
-    // If they spoke to an agent and the chat is over, prompt for a rating.
     if (hadAgentChat && mode === MODE.BOT && !ratingShown) {
       showRating();
     }
@@ -1113,10 +1124,7 @@
     if (mode === MODE.AGENT && zw) zw.sendTyping();
   });
 
-  // ---------- Auto-open after 8 page views (persistent across visits) ----------
-  // Counts page views in localStorage. At the 8th view, auto-opens the panel
-  // ONCE. After that it never auto-opens again (flag persisted), it just sits
-  // as the bubble in the corner.
+  // ---------- Auto-open after 8 page views ----------
   try {
     const PAGES_KEY = 'tbc_pageviews';
     const OPENED_KEY = 'tbc_autoopened';
@@ -1125,11 +1133,8 @@
       window.localStorage.setItem(PAGES_KEY, String(count));
       if (count >= 8) {
         window.localStorage.setItem(OPENED_KEY, '1');
-        // small delay so it doesn't fight with page load
         setTimeout(openPanel, 1200);
       }
     }
-  } catch (e) {
-    // localStorage unavailable (private mode etc.) — skip auto-open silently
-  }
+  } catch (e) {}
 })();
