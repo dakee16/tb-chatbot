@@ -24,6 +24,9 @@
   const scriptUrl = new URL(scriptEl.src, window.location.href);
   const BACKEND_ORIGIN = scriptUrl.origin;          // e.g. https://chat.tilesbay.net
   const BACKEND_URL = `${BACKEND_ORIGIN}/api/chat`;
+  // Which storefront is this? Set via data-brand on the script tag.
+  const BRAND = scriptEl.getAttribute('data-brand') || 'tilesbay';
+  const BRAND_CONFIG_URL = `${BACKEND_ORIGIN}/api/brand-config?brand=${encodeURIComponent(BRAND)}`;
   const LEAVE_MSG_URL = `${BACKEND_ORIGIN}/api/leave-message`;
   const RATE_URL = `${BACKEND_ORIGIN}/api/rate`;
   const CHAT_TICKET_URL = `${BACKEND_ORIGIN}/api/chat-ticket`;
@@ -600,6 +603,27 @@
   let isLoading = false;
   let zw = null;
   let agentTypingTimer = null;
+  // Brand-specific bits, overridden by /api/brand-config on load.
+  let brandGreeting = "Hi! I can help you find the right product or work out how much you need. What are you working on?";
+
+  // Fetch this store's config and apply its accent color, header, and greeting.
+  (function loadBrandConfig() {
+    fetch(BRAND_CONFIG_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (cfg) {
+        if (!cfg) return;
+        if (cfg.accent) host.style.setProperty('--tbc-accent', cfg.accent);
+        if (cfg.accentSoft) host.style.setProperty('--tbc-accent-soft', cfg.accentSoft);
+        if (cfg.header && titleText) titleText.textContent = cfg.header;
+        if (cfg.greeting) {
+          brandGreeting = cfg.greeting;
+          // If the panel is already open on the default greeting, update it.
+          var firstBot = messagesEl.querySelector('.tbc-row.bot .tbc-msg.bot');
+          if (firstBot && transcript.length <= 1) firstBot.textContent = cfg.greeting;
+        }
+      })
+      .catch(function () { /* keep defaults if config can't load */ });
+  })();
 
   // ---------- Helpers ----------
   function escapeHtml(s) {
@@ -841,7 +865,7 @@
       const res = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, brand: BRAND }),
       });
       const data = await res.json();
       hideTyping();
@@ -1089,7 +1113,7 @@
   function openPanel() {
     panel.classList.add('open');
     if (transcript.length === 0 && mode === MODE.BOT) {
-      addMessage('bot', "Hi! I can help you find the right tile or calculate how much you need. What are you working on?");
+      addMessage('bot', brandGreeting);
     }
     inputEl.focus();
   }
