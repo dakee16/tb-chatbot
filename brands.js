@@ -8,18 +8,14 @@
 // To add or change a brand: edit this file, git push, git pull on the VPS,
 // pm2 restart. Nothing else needs to change.
 //
-// PRODUCT CATALOG: all 9 brands share ONE Magento backend and ONE product
-// feed — /opt/chat/data/tilesbay-feed.xml. It is NOT split per brand: category
-// paths use tilesbay's own taxonomy, and every product URL points at
-// tilesbay.com regardless of which storefront actually sells it. Two known
-// limitations from this, until/unless the owner adds a per-product website
-// tag to the feed template:
-//   1. Product links shown on a non-tilesbay site's chat will point to
-//      tilesbay.com, not that site's own domain.
-//   2. Nothing in the data prevents a brand's bot from surfacing a product
-//      that isn't really sold on that storefront — the catalog has no
-//      per-brand partition, only category/material/name text to go on.
-export const SHARED_FEED_FILE = 'tilesbay-feed.xml'; // lives in /opt/chat/data/
+// PRODUCT CATALOG: the owner is generating one XML feed PER SITE from the
+// same template (9 files total), each with that site's own product URLs and
+// only the products that site actually sells. Each file goes on the VPS at:
+//   /opt/chat/data/<slug>-feed.xml
+// e.g. tilesbay-feed.xml, findstone-feed.xml, stackedstone-feed.xml, etc.
+// lib/catalog.js reads data/<brand.slug>-feed.xml by default — no per-brand
+// config needed here unless a brand's file is named differently, in which
+// case set `feedFile: 'whatever.xml'` on that brand below.
 
 const DEFAULT = {
   // fallbacks used if a brand omits a field
