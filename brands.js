@@ -35,6 +35,7 @@ export const BRANDS = {
     domain: 'https://www.tilesbay.com',
     contact: { email: 'csr@tilesbay.com', phone: '(855) 740-5157' },
     zammadChatId: 1,
+    zammadGroup: 'Tilesbay',
     blurb: 'wholesale natural stone, porcelain and ceramic tile',
   },
 
@@ -48,6 +49,7 @@ export const BRANDS = {
     domain: 'https://www.findstone.us',
     contact: { email: 'csr@findstone.us', phone: '(855) 740-5157' },
     zammadChatId: 2,
+    zammadGroup: 'Findstone',
     blurb: 'natural stone, tile, mosaics and moldings',
   },
 
@@ -61,6 +63,7 @@ export const BRANDS = {
     domain: 'https://www.flooringntile.com',
     contact: { email: 'csr@flooringntile.com', phone: '(855) 740-5157' },
     zammadChatId: 3,
+    zammadGroup: 'FlooringnTile',
     blurb: 'natural stone, porcelain, ceramic and landscape tile',
   },
 
@@ -74,6 +77,7 @@ export const BRANDS = {
     domain: 'https://www.backsplash-tile.us',
     contact: { email: 'csr@backsplash-tile.us', phone: '(855) 740-5157' },
     zammadChatId: 4,
+    zammadGroup: 'Backsplash',
     blurb: 'kitchen backsplash, subway, mosaic and decorative tile',
   },
 
@@ -87,6 +91,7 @@ export const BRANDS = {
     domain: 'https://www.floor-tiles.us',
     contact: { email: 'csr@floor-tiles.us', phone: '(855) 740-5157' },
     zammadChatId: 5,
+    zammadGroup: 'Floor Tiles',
     blurb: 'natural stone, porcelain, ceramic and luxury vinyl flooring',
   },
 
@@ -100,6 +105,7 @@ export const BRANDS = {
     domain: 'https://www.patio-pavers.us',
     contact: { email: 'csr@patio-pavers.us', phone: '(855) 740-5157' },
     zammadChatId: 6,
+    zammadGroup: 'Patio Pavers',
     blurb: 'natural stone and porcelain pavers, coping and hardscape',
   },
 
@@ -113,6 +119,7 @@ export const BRANDS = {
     domain: 'https://www.porcelain-tile.us',
     contact: { email: 'csr@porcelain-tile.us', phone: '(855) 740-5157' },
     zammadChatId: 7,
+    zammadGroup: 'Porcelain Tile',
     blurb: 'porcelain and ceramic flooring, mosaics and wall tile',
   },
 
@@ -126,6 +133,7 @@ export const BRANDS = {
     domain: 'https://www.stacked-stone.us',
     contact: { email: 'csr@stacked-stone.us', phone: '(404) 905-9675' },
     zammadChatId: 8,
+    zammadGroup: 'Stacked Stone',
     blurb: 'stacked stone, ledger panels and stone veneer',
   },
 
@@ -139,6 +147,7 @@ export const BRANDS = {
     domain: 'https://www.luxury-vinyl-plank-flooring.com',
     contact: { email: 'csr@luxury-vinyl-plank-flooring.com', phone: '(855) 740-5157' },
     zammadChatId: 9,
+    zammadGroup: 'Luxury Vinyl Plank Flooring',
     blurb: 'luxury vinyl plank and rigid-core flooring',
   },
 };
