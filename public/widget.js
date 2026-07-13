@@ -281,7 +281,7 @@
       letter-spacing: -0.005em;
     }
     .tbc-msg.user {
-      max-width: 82%; padding: 11px 16px;
+      max-width: 100%; padding: 11px 16px;
       background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 100%);
       color: #ffffff;
       border-radius: 20px 20px 6px 20px;
