@@ -8,11 +8,10 @@
 //                 Body: { client_id, customerMsg, botReply, name?, email?, url? }
 //   'handoff'  -> upgrade the existing ticket when a live agent takes over
 //                 Body: { client_id, group?, agentName? }
-//
-// `client_id` is a stable id the widget generates per conversation (NOT the
-// Zammad chat session id, which only exists after handoff). We map
-// client_id -> zammad ticket id in memory so subsequent calls append to the
-// same ticket. Single-process PM2 (fork) makes the in-memory map safe.
+//   'contact'  -> enrich the Zammad customer record once the bot has captured
+//                 name/email/phone mid-conversation (ticket already exists by
+//                 then in the normal case, created on message 1 via guess:email)
+//                 Body: { client_id, name?, email, phone? }
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
@@ -66,6 +65,11 @@ function getClientIp(req) {
   const xff = req.headers['x-forwarded-for'];
   if (xff) return xff.split(',')[0].trim();
   return req.headers['x-real-ip'] || req.connection?.remoteAddress || null;
+}
+
+function splitName(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return { first: parts[0] || '', last: parts.slice(1).join(' ') || '' };
 }
 
 async function createTicket({ customerMsg, botReply, name, email, url, location, deviceType, pageHistory }) {
@@ -180,6 +184,71 @@ async function upgradeTicketForHandoff(ticketId, group, agentName) {
   return r.ok;
 }
 
+// Find the Zammad user for this email (created via guess:email during ticket
+// creation, in the normal flow) and fill in firstname/lastname/phone if those
+// are still blank. Never overwrites a value that's already set. Fully
+// isolated: any failure here is logged and swallowed, never thrown — this is
+// an enrichment step, not part of the core ticket flow, and must never be
+// able to break message handling or ticket creation.
+async function enrichZammadCustomer({ name, email, phone }) {
+  if (!email) return null;
+  try {
+    const searchR = await fetch(
+      `${ZAMMAD_API_URL}/users/search?query=${encodeURIComponent(email)}&limit=5`,
+      { headers: authHeaders() }
+    );
+    if (!searchR.ok) {
+      console.error('enrichZammadCustomer: search failed', searchR.status);
+      return null;
+    }
+    const users = await searchR.json();
+    const match = Array.isArray(users)
+      ? users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())
+      : null;
+
+    if (match) {
+      const update = {};
+      if (name && !match.firstname && !match.lastname) {
+        const { first, last } = splitName(name);
+        update.firstname = first;
+        update.lastname = last;
+      }
+      if (phone && !match.phone) update.phone = phone;
+
+      if (Object.keys(update).length > 0) {
+        const putR = await fetch(`${ZAMMAD_API_URL}/users/${match.id}`, {
+          method: 'PUT', headers: authHeaders(), body: JSON.stringify(update),
+        });
+        if (!putR.ok) {
+          const t = await putR.text();
+          console.error('enrichZammadCustomer: update failed', putR.status, t.slice(0, 200));
+        }
+      }
+      return match.id;
+    }
+
+    // Rare fallback: no existing user found for this email (e.g. contact
+    // captured before any ticket/guess-created user exists yet). Create one
+    // directly. No explicit `roles` sent — let Zammad apply its default for
+    // API-created users rather than risk a rejected roles format.
+    const { first, last } = splitName(name);
+    const createR = await fetch(`${ZAMMAD_API_URL}/users`, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ firstname: first, lastname: last, email, phone: phone || '' }),
+    });
+    if (!createR.ok) {
+      const t = await createR.text();
+      console.error('enrichZammadCustomer: create failed', createR.status, t.slice(0, 200));
+      return null;
+    }
+    const created = await createR.json();
+    return created.id;
+  } catch (e) {
+    console.error('enrichZammadCustomer error:', e.message);
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -204,6 +273,34 @@ export default async function handler(req, res) {
       }
       // no prior ticket (rare) — nothing to upgrade
       return res.status(200).json({ ok: true, ticket_id: null });
+    }
+
+    if (action === 'contact') {
+      const { name, email, phone } = req.body;
+      if (!email) return res.status(400).json({ ok: false, error: 'email required' });
+
+      const customerId = await enrichZammadCustomer({ name, email, phone });
+
+      // Leave a visible note on the ticket so agents see captured contact
+      // info without having to open the customer profile separately.
+      if (existing && existing.ticketId) {
+        const lines = [];
+        if (name) lines.push(`<b>Name:</b> ${esc(name)}`);
+        lines.push(`<b>Email:</b> ${esc(email)}`);
+        if (phone) lines.push(`<b>Phone:</b> ${esc(phone)}`);
+        await fetch(`${ZAMMAD_API_URL}/ticket_articles`, {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({
+            ticket_id: existing.ticketId,
+            subject: 'Contact info captured',
+            body: lines.join('<br>'),
+            type: 'note', internal: true, sender: 'Agent',
+          }),
+        }).catch(() => {});
+        existing.lastSeen = Date.now();
+      }
+
+      return res.status(200).json({ ok: true, customer_id: customerId, ticket_id: existing ? existing.ticketId : null });
     }
 
     // default action: 'message'

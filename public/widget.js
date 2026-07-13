@@ -273,7 +273,6 @@
     }
     .tbc-row.user .tbc-row-avatar { display: none; }
     .tbc-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-    .tbc-row.user .tbc-row-main { display: block; max-width: 82%; align-self: flex-end; }
     .tbc-row-label { display: none; }
 
     /* ===== Message bubbles ===== */
@@ -282,7 +281,7 @@
       letter-spacing: -0.005em;
     }
     .tbc-msg.user {
-      max-width: 100%; padding: 11px 16px;
+      max-width: 82%; padding: 11px 16px;
       background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 100%);
       color: #ffffff;
       border-radius: 20px 20px 6px 20px;
@@ -820,7 +819,25 @@
   }
 
   // ---------- BOT MODE ----------
-  let capturedContact = { name: null, email: null };
+  let capturedContact = { name: null, email: null, phone: null };
+
+  // Send captured contact info to Zammad once (or again if it's updated later).
+  function sendContactUpdate(contact) {
+    if (!contact || !contact.email) return;
+    try {
+      fetch(CHAT_TICKET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'contact',
+          client_id: CLIENT_ID,
+          name: contact.name || null,
+          email: contact.email,
+          phone: contact.phone || null,
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
   function recordExchange(customerMsg, botReply) {
     try {
       fetch(CHAT_TICKET_URL, {
@@ -833,6 +850,7 @@
           botReply: botReply,
           name: capturedContact.name,
           email: capturedContact.email,
+          phone: capturedContact.phone,
           url: window.location.href,
           deviceType: deviceType,
           pageHistory: pageHistory,
@@ -874,6 +892,14 @@
       if (data.error) {
         addMessage('bot', `Sorry, something went wrong: ${data.error}`);
       } else {
+        if (data.contact && data.contact.email) {
+          capturedContact = {
+            name: data.contact.name || capturedContact.name,
+            email: data.contact.email,
+            phone: data.contact.phone || capturedContact.phone,
+          };
+          sendContactUpdate(capturedContact);
+        }
         let reply = data.reply || '';
         const wantsHandoff = /\[\[HANDOFF\]\]/i.test(reply);
         reply = reply.replace(/\[\[HANDOFF\]\]/gi, '').trim();

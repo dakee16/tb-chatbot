@@ -65,6 +65,7 @@ export default async function handler(req, res) {
 
     const conversation = [...messages];
     let iteration = 0;
+    let capturedContact = null; // set if the model calls capture_contact_info this turn
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
@@ -86,7 +87,7 @@ export default async function handler(req, res) {
           .filter((b) => b.type === 'text')
           .map((b) => b.text)
           .join('\n');
-        return res.status(200).json({ reply: text, messages: conversation });
+        return res.status(200).json({ reply: text, messages: conversation, contact: capturedContact });
       }
 
       if (response.stop_reason === 'tool_use') {
@@ -98,6 +99,9 @@ export default async function handler(req, res) {
           try {
             const result = await executeTool(block.name, block.input, ctx);
             console.log(`[tool] ${block.name} result:`, JSON.stringify(result).slice(0, 400));
+            if (block.name === 'capture_contact_info' && result && result.ok && result.captured) {
+              capturedContact = result.captured;
+            }
             toolResults.push({
               type: 'tool_result',
               tool_use_id: block.id,
