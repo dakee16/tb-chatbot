@@ -273,6 +273,7 @@
     }
     .tbc-row.user .tbc-row-avatar { display: none; }
     .tbc-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .tbc-row.user .tbc-row-main { display: block; max-width: 82%; align-self: flex-end; }
     .tbc-row-label { display: none; }
 
     /* ===== Message bubbles ===== */
@@ -281,7 +282,7 @@
       letter-spacing: -0.005em;
     }
     .tbc-msg.user {
-      max-width: 82%; padding: 11px 16px;
+      max-width: 100%; padding: 11px 16px;
       background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 100%);
       color: #ffffff;
       border-radius: 20px 20px 6px 20px;
