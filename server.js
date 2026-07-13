@@ -12,6 +12,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import handler from './api/chat.js';
+import leaveMessageHandler from './api/leave-message.js';
+import rateHandler from './api/rate.js';
+import chatTicketHandler from './api/chat-ticket.js';
+import uploadHandler from './api/upload.js';
+import agentAliasHandler from './api/agent-alias.js';
 import { publicBrandConfig, brandOrigins } from './brands.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +53,11 @@ app.options('/api/brand-config', (req, res) => { corsFor(req, res); res.status(2
 
 app.post('/api/chat', handler);
 app.options('/api/chat', handler);
+app.all('/api/leave-message', leaveMessageHandler);
+app.all('/api/rate', rateHandler);
+app.all('/api/chat-ticket', chatTicketHandler);
+app.all('/api/upload', uploadHandler);
+app.all('/api/agent-alias', agentAliasHandler);
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
