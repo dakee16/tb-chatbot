@@ -297,7 +297,7 @@
       box-shadow: var(--tbc-shadow-sm);
     }
     .tbc-msg.agent {
-      border-color: rgba(225, 29, 46, 0.25);
+      border-color: rgba(225, 29, 46, 0.15);
       box-shadow: 0 4px 14px -6px rgba(225, 29, 46, 0.18), inset 0 0 0 1px rgba(225, 29, 46, 0.05);
     }
     .tbc-msg.system {
