@@ -288,7 +288,7 @@
       box-shadow: 0 6px 16px -6px rgba(10, 10, 10, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .tbc-msg.bot, .tbc-msg.agent {
-      max-width: 85%; padding: 11px 16px;
+      max-width: 100%; padding: 11px 16px;
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       color: var(--tbc-ink-2);
