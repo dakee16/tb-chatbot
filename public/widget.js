@@ -110,10 +110,10 @@
     /* ===== Floating launcher (the bubble) ===== */
     .tbc-bubble {
       position: fixed; bottom: 24px; right: 24px; z-index: 99999;
-      width: 60px; height: 60px; border-radius: 50%;
-      background: radial-gradient(120% 120% at 30% 20%, #1f1f1f 0%, #0a0a0a 60%);
+      height: 56px; min-width: 56px; padding: 0 22px 0 16px; border-radius: 999px;
+      background: radial-gradient(120% 160% at 20% 20%, #1f1f1f 0%, #0a0a0a 65%);
       color: white;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       cursor: pointer;
       pointer-events: auto;
       box-shadow:
@@ -126,16 +126,16 @@
     }
     .tbc-bubble::before {
       content: ''; position: absolute; inset: -40%;
-      background: radial-gradient(circle at 30% 30%, rgba(225, 29, 46, 0.55), transparent 55%);
+      background: radial-gradient(circle at 20% 30%, rgba(225, 29, 46, 0.55), transparent 55%);
       filter: blur(18px); opacity: 0.6;
       animation: tbc-breathe 4.5s ease-in-out infinite;
       pointer-events: none;
     }
     .tbc-bubble::after {
-      content: ''; position: absolute; top: 6px; right: 6px;
-      width: 12px; height: 12px; border-radius: 50%;
+      content: ''; position: absolute; top: 6px; right: 8px;
+      width: 10px; height: 10px; border-radius: 50%;
       background: var(--tbc-accent);
-      box-shadow: 0 0 0 3px #ffffff, 0 0 12px rgba(225, 29, 46, 0.6);
+      box-shadow: 0 0 0 3px #0a0a0a, 0 0 12px rgba(225, 29, 46, 0.6);
       animation: tbc-pulse 2.4s ease-in-out infinite;
     }
     @keyframes tbc-breathe {
@@ -147,14 +147,68 @@
       50% { transform: scale(0.85); opacity: 0.7; }
     }
     .tbc-bubble:hover {
-      transform: translateY(-2px) scale(1.05);
+      transform: translateY(-2px) scale(1.03);
       box-shadow:
         0 18px 40px -10px rgba(225, 29, 46, 0.35),
         0 6px 18px rgba(10, 10, 10, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
     .tbc-bubble:active { transform: translateY(0) scale(0.97); }
-    .tbc-bubble svg { width: 26px; height: 26px; position: relative; z-index: 1; }
+    .tbc-bubble-icon {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative; z-index: 1;
+    }
+    .tbc-bubble svg { width: 18px; height: 18px; position: relative; z-index: 1; }
+    .tbc-bubble-text {
+      position: relative; z-index: 1;
+      font-weight: 700; font-size: 13.5px; letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    /* ===== Teaser popup (above the launcher) ===== */
+    .tbc-teaser {
+      position: fixed; bottom: 92px; right: 24px; z-index: 99999;
+      width: 260px; max-width: calc(100vw - 48px);
+      display: none; flex-direction: column; gap: 8px;
+      pointer-events: auto;
+      animation: tbc-teaserIn 0.4s var(--tbc-ease);
+    }
+    .tbc-teaser.open { display: flex; }
+    @keyframes tbc-teaserIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .tbc-teaser-bubble {
+      position: relative;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(10, 10, 10, 0.06);
+      border-radius: 18px;
+      padding: 13px 16px;
+      font-size: 13px; line-height: 1.45; font-weight: 500;
+      color: var(--tbc-ink-2);
+      box-shadow: var(--tbc-shadow-md);
+      cursor: pointer;
+    }
+    .tbc-teaser-bubble-2 {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 100%);
+      color: #ffffff;
+      max-width: 92%;
+    }
+    .tbc-teaser-close {
+      position: absolute; top: -8px; right: -8px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #ffffff; border: 1px solid var(--tbc-line);
+      color: var(--tbc-ink-2); font-size: 14px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: var(--tbc-shadow-sm);
+      transition: transform 0.15s var(--tbc-ease);
+    }
+    .tbc-teaser-close:hover { transform: scale(1.1); }
 
     /* ===== The panel (liquid glass card) ===== */
     .tbc-panel {
@@ -518,6 +572,7 @@
         border-radius: 24px;
       }
       .tbc-bubble { bottom: 18px; right: 18px; }
+      .tbc-teaser { bottom: 86px; right: 12px; width: 230px; }
     }
 
     /* ===== Reduced motion ===== */
@@ -526,7 +581,7 @@
       .tbc-header-title::before, .tbc-handoff-btn::before {
         animation: none;
       }
-      .tbc-panel, .tbc-row { animation: none; }
+      .tbc-panel, .tbc-row, .tbc-teaser { animation: none; }
       .tbc-bubble, .tbc-send, .tbc-handoff-btn, .tbc-chip,
       .tbc-close, .tbc-attach, .tbc-rating-btns button,
       .tbc-leave-form button, .tbc-composer-card {
@@ -548,8 +603,24 @@
   // ---------- DOM ----------
   const bubble = document.createElement('div');
   bubble.className = 'tbc-bubble';
-  bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><circle cx="9" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="16" cy="11.5" r="0.9" fill="currentColor" stroke="none"/></svg>`;
+  bubble.innerHTML = `
+    <span class="tbc-bubble-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><circle cx="9" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="16" cy="11.5" r="0.9" fill="currentColor" stroke="none"/></svg></span>
+    <span class="tbc-bubble-text">Need Help?</span>
+  `;
   shadow.appendChild(bubble);
+
+  const teaser = document.createElement('div');
+  teaser.className = 'tbc-teaser';
+  teaser.innerHTML = `
+    <div class="tbc-teaser-bubble tbc-teaser-bubble-1">
+      <button class="tbc-teaser-close" aria-label="Dismiss">&times;</button>
+      <span class="tbc-teaser-hook">Got a project in mind?</span>
+    </div>
+    <div class="tbc-teaser-bubble tbc-teaser-bubble-2">
+      <span class="tbc-teaser-sub">I can help you find the right product and figure out how much you need.</span>
+    </div>
+  `;
+  shadow.appendChild(teaser);
 
   const panel = document.createElement('div');
   panel.className = 'tbc-panel';
@@ -591,6 +662,10 @@
   const fileInput = panel.querySelector('.tbc-file-input');
   const titleText = panel.querySelector('.tbc-title-text');
   const statusDot = panel.querySelector('.tbc-status-dot'); // may be null
+  const bubbleText = bubble.querySelector('.tbc-bubble-text');
+  const teaserHookEl = teaser.querySelector('.tbc-teaser-hook');
+  const teaserSubEl = teaser.querySelector('.tbc-teaser-sub');
+  const teaserCloseBtn = teaser.querySelector('.tbc-teaser-close');
 
   // ---------- State ----------
   const MODE = { BOT: 'bot', CONNECTING: 'connecting', AGENT: 'agent', LEAVE: 'leave' };
@@ -621,6 +696,9 @@
           var firstBot = messagesEl.querySelector('.tbc-row.bot .tbc-msg.bot');
           if (firstBot && transcript.length <= 1) firstBot.textContent = cfg.greeting;
         }
+        if (cfg.cta && bubbleText) bubbleText.textContent = cfg.cta;
+        if (cfg.teaserHook && teaserHookEl) teaserHookEl.textContent = cfg.teaserHook;
+        if (cfg.teaserSub && teaserSubEl) teaserSubEl.textContent = cfg.teaserSub;
       })
       .catch(function () { /* keep defaults if config can't load */ });
   })();
@@ -1145,7 +1223,26 @@
     inputEl.focus();
   }
 
+  function hideTeaser() {
+    teaser.classList.remove('open');
+  }
+  function dismissTeaser() {
+    hideTeaser();
+    try { window.localStorage.setItem('tbc_teaser_seen', '1'); } catch (e) {}
+  }
+  teaserCloseBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    dismissTeaser();
+  });
+  teaser.querySelectorAll('.tbc-teaser-bubble').forEach(function (b) {
+    b.addEventListener('click', function () {
+      dismissTeaser();
+      if (!panel.classList.contains('open')) openPanel();
+    });
+  });
+
   bubble.addEventListener('click', () => {
+    hideTeaser();
     if (panel.classList.contains('open')) {
       panel.classList.remove('open');
     } else {
@@ -1186,6 +1283,19 @@
         window.localStorage.setItem(OPENED_KEY, '1');
         setTimeout(openPanel, 1200);
       }
+    }
+  } catch (e) {}
+
+  // ---------- Teaser popup: one-time nudge above the launcher ----------
+  try {
+    const TEASER_KEY = 'tbc_teaser_seen';
+    if (window.localStorage.getItem(TEASER_KEY) !== '1' && window.localStorage.getItem('tbc_autoopened') !== '1') {
+      setTimeout(function () {
+        if (panel.classList.contains('open')) return;
+        window.localStorage.setItem(TEASER_KEY, '1');
+        teaser.classList.add('open');
+        setTimeout(hideTeaser, 12000);
+      }, 3000);
     }
   } catch (e) {}
 })();
