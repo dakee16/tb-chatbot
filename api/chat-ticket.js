@@ -18,7 +18,7 @@ config({ path: '.env.local' });
 
 const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
 const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || '';
-const DEFAULT_GROUP = process.env.ZAMMAD_GROUP || 'Tilesbay';
+const DEFAULT_GROUP = process.env.ZAMMAD_GROUP || 'TB';
 
 // client_id -> { ticketId, lastSeen }
 const sessionTickets = new Map();

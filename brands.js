@@ -40,7 +40,7 @@ export const BRANDS = {
     domain: 'https://www.tilesbay.com',
     contact: { email: 'csr@tilesbay.com', phone: '(855) 740-5157' },
     zammadChatId: 1,
-    zammadGroup: 'Tilesbay',
+    zammadGroup: 'TB',
     blurb: 'wholesale natural stone, porcelain and ceramic tile',
   },
 
@@ -56,7 +56,7 @@ export const BRANDS = {
     domain: 'https://www.findstone.us',
     contact: { email: 'contact@findstone.us', phone: '(949) 484-5371' },
     zammadChatId: 2,
-    zammadGroup: 'Findstone',
+    zammadGroup: 'FS',
     blurb: 'natural stone, tile, mosaics and moldings',
   },
 
@@ -72,7 +72,7 @@ export const BRANDS = {
     domain: 'https://www.flooringntile.com',
     contact: { email: 'info@flooringntile.com', phone: '(732) 723-7314' },
     zammadChatId: 3,
-    zammadGroup: 'FlooringnTile',
+    zammadGroup: 'FnT',
     blurb: 'natural stone, porcelain, ceramic and landscape tile',
   },
 
@@ -88,7 +88,7 @@ export const BRANDS = {
     domain: 'https://www.backsplash-tile.us',
     contact: { email: 'support@backsplash-tile.us', phone: '(855) 740-5157' },
     zammadChatId: 4,
-    zammadGroup: 'Backsplash',
+    zammadGroup: 'BT',
     blurb: 'kitchen backsplash, subway, mosaic and decorative tile',
   },
 
@@ -104,7 +104,7 @@ export const BRANDS = {
     domain: 'https://www.floor-tiles.us',
     contact: { email: 'sales@floor-tiles.us', phone: '(214) 440-3610' },
     zammadChatId: 5,
-    zammadGroup: 'Floor Tiles',
+    zammadGroup: 'FT',
     blurb: 'natural stone, porcelain, ceramic and luxury vinyl flooring',
   },
 
@@ -120,7 +120,7 @@ export const BRANDS = {
     domain: 'https://www.patio-pavers.us',
     contact: { email: 'care@patio-pavers.us', phone: '(480) 866-9660' },
     zammadChatId: 6,
-    zammadGroup: 'Patio Pavers',
+    zammadGroup: 'PP',
     blurb: 'natural stone and porcelain pavers, coping and hardscape',
   },
 
@@ -136,7 +136,7 @@ export const BRANDS = {
     domain: 'https://www.porcelain-tile.us',
     contact: { email: 'csr@porcelain-tile.us', phone: '(904) 478-8200' },
     zammadChatId: 7,
-    zammadGroup: 'Porcelain Tile',
+    zammadGroup: 'PT',
     blurb: 'porcelain and ceramic flooring, mosaics and wall tile',
   },
 
@@ -152,7 +152,7 @@ export const BRANDS = {
     domain: 'https://www.stacked-stone.us',
     contact: { email: 'support@stacked-stone.us', phone: '(404) 905-9675' },
     zammadChatId: 8,
-    zammadGroup: 'Stacked Stone',
+    zammadGroup: 'SS',
     blurb: 'stacked stone, ledger panels and stone veneer',
   },
 
@@ -168,7 +168,7 @@ export const BRANDS = {
     domain: 'https://www.luxury-vinyl-plank-flooring.com',
     contact: { email: 'sales@luxury-vinyl-plank-flooring.com', phone: '(248) 864-0911' },
     zammadChatId: 9,
-    zammadGroup: 'Luxury Vinyl Plank Flooring',
+    zammadGroup: 'LVP',
     blurb: 'luxury vinyl plank and rigid-core flooring',
   },
 };
