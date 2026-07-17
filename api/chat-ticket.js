@@ -101,7 +101,7 @@ async function createTicket({ customerMsg, botReply, name, email, url, location,
     title: `Website chat — ${displayName}`,
     group: DEFAULT_GROUP,
     ...customerField,
-    tags: 'website-chat,bot',
+    tags: 'website-chat',
     article: {
       subject: 'Website chat',
       body: bodyHtml,
@@ -164,7 +164,7 @@ async function findAgentIdByName(agentName) {
 }
 
 async function upgradeTicketForHandoff(ticketId, group, agentName) {
-  const update = { tags: 'website-chat,agent' };
+  const update = { tags: 'website-chat' };
   if (group) update.group = group;
   const ownerId = await findAgentIdByName(agentName);
   if (ownerId) update.owner_id = ownerId;

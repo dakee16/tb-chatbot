@@ -7,14 +7,14 @@
 // Requires these env vars in .env.local:
 //   ZAMMAD_API_URL    e.g. http://localhost:8080/api/v1   (internal, bypasses nginx allowlist)
 //   ZAMMAD_API_TOKEN  a Zammad token with ticket.agent permission
-//   ZAMMAD_GROUP      destination group, e.g. "Tilesbay"
+//   ZAMMAD_GROUP      destination group, e.g. "TB"
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
 const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || 'QEZ5YRDLhKRRTobzt8TJPQwzvw4hzE_A5Ls63mPVuTtlr3pL4EJLmt-HTvjGrK4q';
-const ZAMMAD_GROUP = process.env.ZAMMAD_GROUP || 'Tilesbay';
+const ZAMMAD_GROUP = process.env.ZAMMAD_GROUP || 'TB';
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
