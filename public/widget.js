@@ -656,7 +656,7 @@
         </div>
       </div>
     </div>
-    <div class="tbc-disclaimer">AI-generated responses may be inaccurate. Please confirm anything important with our team.</div>
+    <div class="tbc-disclaimer">AI-generated responses may be inaccurate. All confirmations should be authenticated by a live agent.</div>
   `;
   shadow.appendChild(panel);
 
