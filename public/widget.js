@@ -443,6 +443,15 @@
       box-shadow: var(--tbc-shadow-md);
     }
 
+    /* ===== AI disclaimer footer ===== */
+    .tbc-disclaimer {
+      padding: 0 20px 14px;
+      font-size: 10.5px;
+      line-height: 1.3;
+      color: rgba(10, 10, 10, 0.4);
+      text-align: center;
+    }
+
     /* ===== Handoff row ===== */
     .tbc-handoff-row { padding: 0 16px 6px; }
     .tbc-handoff-btn {
@@ -647,6 +656,7 @@
         </div>
       </div>
     </div>
+    <div class="tbc-disclaimer">AI-generated responses may be inaccurate. Please confirm anything important with our team.</div>
   `;
   shadow.appendChild(panel);
 
