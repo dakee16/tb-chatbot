@@ -5,6 +5,12 @@
 // Runs the Claude tool-use loop: model -> tool_use -> execute -> tool_result -> model
 // until the model returns a final text response. The `brand` slug scopes the
 // system prompt, product feed, pricing, and contact info to the right store.
+//
+// Warehouse context: on each request we resolve the visitor's approximate
+// location from their IP and inject the full warehouse list + nearest match
+// into the system prompt. The prompt tells the model to keep this quiet
+// unless the customer asks about pickup / shipping origin / their nearest
+// location. Lookups are cached per IP in lib/geoip.js, so this is cheap.
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
@@ -13,6 +19,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildSystemPrompt } from '../lib/system-prompt.js';
 import { TOOLS, executeTool } from '../lib/tools.js';
 import { getBrand, brandOrigins } from '../brands.js';
+import { getClientIp, geoLookup } from '../lib/geoip.js';
+import { getAllWarehouses, findNearest } from '../lib/warehouses.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -60,7 +68,23 @@ export default async function handler(req, res) {
     }
 
     const brand = getBrand(brandSlug);
-    const systemPrompt = buildSystemPrompt(brand);
+
+    // Resolve visitor's approximate location and nearest warehouse. Fully
+    // best-effort: any failure just means the prompt is built without
+    // warehouse context and the bot proceeds normally.
+    let nearestWarehouse = null;
+    try {
+      const ip = getClientIp(req);
+      const geo = await geoLookup(ip);
+      if (geo && geo.lat != null && geo.lng != null) {
+        nearestWarehouse = findNearest(geo.lat, geo.lng);
+      }
+    } catch (e) {
+      console.log('[chat] geo lookup failed:', e.message);
+    }
+    const allWarehouses = getAllWarehouses();
+
+    const systemPrompt = buildSystemPrompt(brand, { nearestWarehouse, allWarehouses });
     const ctx = { brand: brand.slug };
 
     const conversation = [...messages];

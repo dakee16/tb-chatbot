@@ -12,9 +12,14 @@
 //                 name/email/phone mid-conversation (ticket already exists by
 //                 then in the normal case, created on message 1 via guess:email)
 //                 Body: { client_id, name?, email, phone? }
+//
+// Geo-IP lookup uses lib/geoip.js — same module /api/chat uses, so the same
+// visitor's IP is only looked up once per 30 min across both endpoints.
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
+
+import { getClientIp, geoLookup } from '../lib/geoip.js';
 
 const ZAMMAD_API_URL = process.env.ZAMMAD_API_URL || 'http://localhost:8080/api/v1';
 const ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN || '';
@@ -45,26 +50,6 @@ function authHeaders() {
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// Look up approximate location from an IP address using ip-api.com (free, no key).
-async function geoLookup(ip) {
-  if (!ip || ip === '127.0.0.1' || ip === '::1') return null;
-  try {
-    const r = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,city,regionName,country`);
-    const data = await r.json();
-    if (data.status === 'success') {
-      return [data.city, data.regionName, data.country].filter(Boolean).join(', ');
-    }
-  } catch (e) {}
-  return null;
-}
-
-// Extract the real client IP from request headers (behind nginx proxy).
-function getClientIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) return xff.split(',')[0].trim();
-  return req.headers['x-real-ip'] || req.connection?.remoteAddress || null;
 }
 
 function splitName(name) {
@@ -313,9 +298,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, ticket_id: existing.ticketId, created: false });
     }
 
-    // First message — look up visitor's location from their IP
+    // First message — look up visitor's location from their IP using the
+    // shared cache (same lookup /api/chat used a moment ago is served free).
     const clientIp = getClientIp(req);
-    const location = await geoLookup(clientIp);
+    const geo = await geoLookup(clientIp);
+    const location = geo ? geo.label : null;
 
     const ticketId = await createTicket({
       customerMsg, botReply: botReply || '', name, email, url,

@@ -1,0 +1,13 @@
+{
+  "_note": "Shared across all 9 brand storefronts. Add exact street addresses, phone, and hours per warehouse when available. lat/lng are approximate city-center coordinates used for nearest-warehouse calculation only.",
+  "warehouses": [
+    { "city": "Atlanta",  "state": "GA", "lat": 33.7490,  "lng":  -84.3880 },
+    { "city": "Dallas",   "state": "TX", "lat": 32.7767,  "lng":  -96.7970 },
+    { "city": "Irvine",   "state": "CA", "lat": 33.6846,  "lng": -117.8265 },
+    { "city": "Newark",   "state": "NJ", "lat": 40.7357,  "lng":  -74.1724 },
+    { "city": "Chicago",  "state": "IL", "lat": 41.8781,  "lng":  -87.6298 },
+    { "city": "Houston",  "state": "TX", "lat": 29.7604,  "lng":  -95.3698 },
+    { "city": "Miami",    "state": "FL", "lat": 25.7617,  "lng":  -80.1918 },
+    { "city": "Phoenix",  "state": "AZ", "lat": 33.4484,  "lng": -112.0740 }
+  ]
+}
